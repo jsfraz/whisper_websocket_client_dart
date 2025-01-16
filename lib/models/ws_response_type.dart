@@ -1,0 +1,4 @@
+enum WsResponseType {
+  error,
+  message
+}

@@ -1,0 +1,20 @@
+name: whisper_websocket_client_dart
+description: WebSocket client for Whisper messaging server.
+version: 1.0.0
+repository: https://github.com/jsfraz/whisper_websocket_client_dart
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  web_socket_channel: ^3.0.1
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0
+  dotenv: ^4.2.0
+  pointycastle: ^3.9.1
+  basic_utils: ^5.7.0
+  whisper_openapi_client_dart:
+    git:
+      url: https://github.com/jsfraz/whisper_openapi_client_dart.git
