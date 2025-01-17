@@ -1,6 +1,7 @@
 import 'new_private_message.dart';
 import 'ws_message_type.dart';
 
+/// A message to be sent to the WebSocket server
 class WsMessage {
   final WsMessageType type; // Type of the message
   final dynamic payload; // Payload to be sent
