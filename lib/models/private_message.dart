@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+/// A message received from a private chat
 class PrivateMessage {
   final int senderId;
   final Uint8List message;

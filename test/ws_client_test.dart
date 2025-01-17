@@ -134,7 +134,7 @@ void main() {
     var messageToSendStr = 'Hello, World!';
     print('Sending message: $messageToSendStr');
     var messageToSend = WsMessage.privateMessage(
-        NewPrivateMessage.newPrivateMessage(userId, utf8.encode(messageToSendStr)));
+        NewPrivateMessage(userId, utf8.encode(messageToSendStr)));
     wsClient.sendMessage(messageToSend);
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));

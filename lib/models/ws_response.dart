@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'private_message.dart';
 import 'ws_response_type.dart';
 
+/// A response received from the WebSocket server
 class WsResponse {
   final WsResponseType type;
   final dynamic payload;
