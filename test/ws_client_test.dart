@@ -110,7 +110,7 @@ void main() {
   });
 
   // Test connecting to the server and sending message to self
-  // NOTE: Sending message to self wont work, I am doing this shile debuging the server
+  // NOTE: Sending message to self wont work, I am doing this while debuging the server.
   test('connectAndSendMessageToSelf', () async {
     // Get access token
     var accessToken = await getOneTimeAccessToken();
@@ -134,7 +134,7 @@ void main() {
     var messageToSendStr = 'Hello, World!';
     print('Sending message: $messageToSendStr');
     var messageToSend = WsMessage.privateMessage(
-        NewPrivateMessage(userId, utf8.encode(messageToSendStr)));
+        NewPrivateMessage(userId, utf8.encode(messageToSendStr), DateTime.now()));
     wsClient.sendMessage(messageToSend);
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));

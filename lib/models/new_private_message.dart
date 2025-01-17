@@ -4,13 +4,15 @@ import 'dart:typed_data';
 class NewPrivateMessage {
   final int receiverId;
   final Uint8List message;
+  final DateTime sentAt;
 
-  NewPrivateMessage(this.receiverId, this.message);
+  NewPrivateMessage(this.receiverId, this.message, this.sentAt);
 
   Map<String, dynamic> toJson() {
     return {
       'message': message,
       'receiverId': receiverId,
+      'sentAt': sentAt.toIso8601String(),
     };
   }
 }
