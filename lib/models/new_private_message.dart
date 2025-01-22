@@ -12,7 +12,7 @@ class NewPrivateMessage {
     return {
       'message': message,
       'receiverId': receiverId,
-      'sentAt': sentAt.toIso8601String(),
+      'sentAt': sentAt.toUtc().toIso8601String(),
     };
   }
 }
