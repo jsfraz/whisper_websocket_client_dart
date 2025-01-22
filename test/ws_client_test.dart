@@ -141,4 +141,10 @@ void main() {
     // Close WebSocket connection
     wsClient.disconnect();
   });
+
+  // Test isConnected getter
+  test('isConnected', () {
+    var wsClient = WsClient(getWsUrl(serverUrl), (_) {});
+    expect(wsClient.isConnected, false);
+  });
 }

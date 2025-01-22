@@ -9,7 +9,7 @@ class WsClient {
   /// Use 'ws://' for non-secure WebSocket connections
   final String _url;
   final Function(WsResponse) _onReceived;
-  late WebSocketChannel? _channel;
+  WebSocketChannel? _channel;
 
   WsClient(this._url, this._onReceived);
 
@@ -27,10 +27,7 @@ class WsClient {
 
   /// Check if the WebSocket connection is established
   bool get isConnected {
-    if (_channel == null) {
-      return false;
-    }
-    return _channel!.closeCode == null;
+    return _channel != null && _channel!.closeCode == null;
   }
 
   /// Disconnect from the WebSocket server
