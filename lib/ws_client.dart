@@ -27,7 +27,10 @@ class WsClient {
 
   /// Check if the WebSocket connection is established
   bool get isConnected {
-    return _channel != null && _channel!.closeCode == null;
+    if (_channel == null) {
+      return false;
+    }
+    return _channel!.closeCode == null;
   }
 
   /// Disconnect from the WebSocket server
