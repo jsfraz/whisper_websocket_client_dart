@@ -6,7 +6,11 @@ class NewPrivateMessage {
   final Uint8List message;
   final DateTime sentAt;
 
-  NewPrivateMessage(this.receiverId, this.message, this.sentAt);
+  factory NewPrivateMessage(int receiverId, Uint8List message) {
+    return NewPrivateMessage._internal(receiverId, message, DateTime.now());
+  }
+
+  NewPrivateMessage._internal(this.receiverId, this.message, this.sentAt);
 
   Map<String, dynamic> toJson() {
     return {

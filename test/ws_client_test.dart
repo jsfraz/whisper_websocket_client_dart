@@ -101,7 +101,7 @@ void main() {
     // Get access token
     var accessToken = await getOneTimeAccessToken();
     // Connect to the server
-    var wsClient = WsClient(getWsUrl(serverUrl), (_) {});
+    var wsClient = WsClient(getWsUrl(serverUrl));
     wsClient.connect(accessToken);
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));
@@ -115,7 +115,7 @@ void main() {
     // Get access token
     var accessToken = await getOneTimeAccessToken();
     // Connect to the server
-    var wsClient = WsClient(getWsUrl(serverUrl), (wsResponse) {
+    var wsClient = WsClient(getWsUrl(serverUrl), onReceived: (wsResponse) {
       // Print received message
       switch (wsResponse.type) {
         case WsResponseType.message:
@@ -134,8 +134,12 @@ void main() {
     var messageToSendStr = 'Hello, World!';
     print('Sending message: $messageToSendStr');
     var messageToSend = WsMessage.privateMessage(
-        NewPrivateMessage(userId, utf8.encode(messageToSendStr), DateTime.now()));
-    wsClient.sendMessage(messageToSend);
+        NewPrivateMessage(userId, utf8.encode(messageToSendStr)));
+    for (var i = 0; i < 5; i++) {
+      var sentTime = wsClient.sendMessage(messageToSend);
+      print('Message sent at: $sentTime');
+      await Future.delayed(Duration(milliseconds: 500));
+    }
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));
     // Close WebSocket connection
@@ -144,7 +148,16 @@ void main() {
 
   // Test isConnected getter
   test('isConnected', () {
-    var wsClient = WsClient(getWsUrl(serverUrl), (_) {});
+    var wsClient = WsClient(getWsUrl(serverUrl));
     expect(wsClient.isConnected, false);
+  });
+
+  // Test sending message when not connected
+  test('sendMessageWhenNotConnected', () {
+    var wsClient = WsClient(getWsUrl(serverUrl));
+    expect(
+        () => wsClient.sendMessage(WsMessage.privateMessage(
+            NewPrivateMessage(userId, utf8.encode('Hello, World!')))),
+        throwsA(TypeMatcher<Exception>()));
   });
 }
