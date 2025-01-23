@@ -8,10 +8,10 @@ class WsClient {
   /// Use 'wss://' for secure WebSocket connections (recommended)
   /// Use 'ws://' for non-secure WebSocket connections
   final String _url;
-  final Function(WsResponse) _onReceived;
+  final Function(WsResponse)? onReceived;
   WebSocketChannel? _channel;
 
-  WsClient(this._url, this._onReceived);
+  WsClient(this._url, {this.onReceived});
 
   /// Connect to the WebSocket server
   void connect(String oneTimeAccessToken) {
@@ -21,7 +21,9 @@ class WsClient {
 
     // Listen for incoming messages
     _channel!.stream.listen((data) {
-      _onReceived(WsResponse.fromUint8List(data));
+      if (onReceived != null) {
+        onReceived!(WsResponse.fromUint8List(data));
+      }
     });
   }
 
@@ -32,12 +34,21 @@ class WsClient {
 
   /// Disconnect from the WebSocket server
   void disconnect() {
-    _channel!.sink.close();
-    _channel = null;
+    if (_channel != null) {
+      _channel!.sink.close();
+      _channel = null;
+    } else {
+      throw Exception('WebSocket connection not established');
+    }
   }
 
   /// Send a message to the WebSocket server
-  void sendMessage(WsMessage message) {
-    _channel!.sink.add(utf8.encode(jsonEncode(message)));
+  DateTime sendMessage(WsMessage message) {
+    if (_channel != null) {
+      _channel!.sink.add(utf8.encode(jsonEncode(message)));
+      return DateTime.now();
+    } else {
+      throw Exception('WebSocket connection not established');
+    }
   }
 }
