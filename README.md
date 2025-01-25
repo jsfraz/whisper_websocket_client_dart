@@ -5,7 +5,8 @@ A WebSocket client for Whisper messaging server.
 ## Installation
 
 Add the following dependency to your pubspec.yaml
-```
+
+```yaml
 whisper_websocket_client_dart:
     git:
       url: https://github.com/jsfraz/whisper_websocket_client_dart.git
@@ -16,7 +17,7 @@ whisper_websocket_client_dart:
 ```dart
 import 'package:whisper_websocket_client_dart/ws_client.dart';
 
-var wsClient = WsClient('ws://localhost:8080/ws', (wsResponse) {
+var wsClient = WsClient('ws://localhost:8080/ws', onReceived: (wsResponse) {
     // TODO handle server response
 });
 wsClient.connect(accessToken);

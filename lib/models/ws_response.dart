@@ -14,16 +14,33 @@ class WsResponse {
   /// Constructor from Uint8List
   factory WsResponse.fromUint8List(Uint8List data) {
     var json = jsonDecode(utf8.decode(data));
-    var type = WsResponseType.values.byName(json['type'] as String);
+    WsResponseType type;
+    try {
+      type = WsResponseType.values.byName(json['type'] as String);
+    } on ArgumentError {
+      // Return error on unknown type
+      return WsResponse._internal(
+        WsResponseType.error,
+        'unknown response type: ${json['type']} received from server',
+      );
+    }
+    
     dynamic payload;
     switch (type) {
-      // Error
-      case WsResponseType.error:
-        payload = json['payload'] as String;
-        break;
       // Message
       case WsResponseType.message:
         payload = PrivateMessage.fromJson(json['payload']);
+        break;
+      // List of messages
+      case WsResponseType.messages:
+        List<PrivateMessage> messages = (json['payload'] as List)
+            .map((msg) => PrivateMessage.fromJson(msg as Map<String, dynamic>))
+            .toList();
+        payload = messages;
+        break;
+      // Error
+      case WsResponseType.error:
+        payload = json['payload'] as String;
         break;
     }
     return WsResponse._internal(type, payload);
