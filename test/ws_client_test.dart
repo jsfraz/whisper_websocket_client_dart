@@ -105,6 +105,7 @@ void main() {
       // Print received message
       switch (wsResponse.type) {
         case WsResponseType.messages:
+          // TODO decrypt message
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
             print('UseID: ${message.senderId} Message: ${message.message}');
@@ -114,8 +115,6 @@ void main() {
           var error = wsResponse.payload as String;
           print('Received error: $error');
           break;
-        default:
-        break;
       }
     });
     wsClient.connect(accessToken);
@@ -134,17 +133,17 @@ void main() {
     var wsClient = WsClient(getWsUrl(serverUrl), onReceived: (wsResponse) {
       // Print received message
       switch (wsResponse.type) {
-        case WsResponseType.message:
-          var message = wsResponse.payload as PrivateMessage;
+        case WsResponseType.messages:
           // TODO decrypt message
-          print('Received message: ${utf8.decode(message.message)}');
+          var messages = wsResponse.payload as List<PrivateMessage>;
+          for (var message in messages) {
+            print('UseID: ${message.senderId} Message: ${message.message}');
+          }
           break;
         case WsResponseType.error:
           var error = wsResponse.payload as String;
           print('Received error: $error');
           break;
-        default:
-        break;
       }
     });
     wsClient.connect(accessToken);

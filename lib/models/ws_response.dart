@@ -27,10 +27,6 @@ class WsResponse {
     
     dynamic payload;
     switch (type) {
-      // Message
-      case WsResponseType.message:
-        payload = PrivateMessage.fromJson(json['payload']);
-        break;
       // List of messages
       case WsResponseType.messages:
         List<PrivateMessage> messages = (json['payload'] as List)
