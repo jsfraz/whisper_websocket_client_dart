@@ -101,7 +101,23 @@ void main() {
     // Get access token
     var accessToken = await getOneTimeAccessToken();
     // Connect to the server
-    var wsClient = WsClient(getWsUrl(serverUrl));
+    var wsClient = WsClient(getWsUrl(serverUrl), onReceived: (wsResponse) {
+      // Print received message
+      switch (wsResponse.type) {
+        case WsResponseType.messages:
+          var messages = wsResponse.payload as List<PrivateMessage>;
+          for (var message in messages) {
+            print('UseID: ${message.senderId} Message: ${message.message}');
+          }
+          break;
+        case WsResponseType.error:
+          var error = wsResponse.payload as String;
+          print('Received error: $error');
+          break;
+        default:
+        break;
+      }
+    });
     wsClient.connect(accessToken);
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));
@@ -120,12 +136,15 @@ void main() {
       switch (wsResponse.type) {
         case WsResponseType.message:
           var message = wsResponse.payload as PrivateMessage;
+          // TODO decrypt message
           print('Received message: ${utf8.decode(message.message)}');
           break;
         case WsResponseType.error:
           var error = wsResponse.payload as String;
           print('Received error: $error');
           break;
+        default:
+        break;
       }
     });
     wsClient.connect(accessToken);
