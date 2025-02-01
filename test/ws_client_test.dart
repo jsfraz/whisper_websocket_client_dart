@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
-import 'dart:typed_data';
 import 'package:basic_utils/basic_utils.dart';
 import 'package:test/test.dart';
 import 'package:whisper_openapi_client_dart/api.dart';
@@ -11,6 +9,7 @@ import 'package:whisper_websocket_client_dart/models/private_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
 import 'package:whisper_websocket_client_dart/ws_client.dart';
+import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart' as djwt;
 
 void main() {
   late String serverUrl;
@@ -52,20 +51,19 @@ void main() {
   Future<String> getOneTimeAccessToken() async {
     var apiClient = ApiClient(basePath: serverUrl);
     var authApi = AuthenticationApi(apiClient);
-    // Generate and sign nonce
-    var nonce = Uint8List.fromList(
-        List.generate(256, (_) => Random.secure().nextInt(256)));
-    final signer = Signer('SHA-256/RSA');
-    final rsaPrivateKeyParams = PrivateKeyParameter<RSAPrivateKey>(
-        CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem));
-    signer.init(true, rsaPrivateKeyParams);
-    final signedNonce = signer.generateSignature(nonce) as RSASignature;
+    // Generate JWT
+    final jwt = djwt.JWT({'sub': userId});
+    Duration expiresIn = Duration(seconds: 5);
+    Duration notBefore = Duration.zero;
+    final token = jwt.sign(
+        djwt.RSAPrivateKey.raw(CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem)),
+        algorithm: djwt.JWTAlgorithm.RS256,
+        expiresIn: expiresIn,
+        notBefore: notBefore,
+        noIssueAt: false);
     // Auth user
-    var authResponse = await authApi.authUser(
-        authUserInput: AuthUserInput(
-            nonce: base64Encode(nonce),
-            signedNonce: base64Encode(signedNonce.bytes),
-            userId: userId));
+    var authResponse =
+        await authApi.authUser(authUserInput: AuthUserInput(token: token));
     if (authResponse == null) {
       throw Exception('Failed to authenticate user');
     }
