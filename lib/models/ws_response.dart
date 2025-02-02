@@ -24,7 +24,7 @@ class WsResponse {
         'unknown response type: ${json['type']} received from server',
       );
     }
-    
+
     dynamic payload;
     switch (type) {
       // List of messages
@@ -33,6 +33,10 @@ class WsResponse {
             .map((msg) => PrivateMessage.fromJson(msg as Map<String, dynamic>))
             .toList();
         payload = messages;
+        break;
+      // Delete account
+      case WsResponseType.deleteAccount:
+        payload = null;
         break;
       // Error
       case WsResponseType.error:
