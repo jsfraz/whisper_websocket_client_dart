@@ -113,6 +113,9 @@ void main() {
           var error = wsResponse.payload as String;
           print('Received error: $error');
           break;
+        default:
+        print('Response type: ${wsResponse.type}');
+        break;
       }
     });
     wsClient.connect(accessToken);
@@ -142,6 +145,9 @@ void main() {
           var error = wsResponse.payload as String;
           print('Received error: $error');
           break;
+        default:
+        print('Response type: ${wsResponse.type}');
+        break;
       }
     });
     wsClient.connect(accessToken);
