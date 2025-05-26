@@ -118,7 +118,7 @@ void main() {
         break;
       }
     });
-    wsClient.connect(accessToken);
+    await wsClient.connect(accessToken, Duration(seconds: 5));
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));
     // Close WebSocket connection
@@ -150,7 +150,7 @@ void main() {
         break;
       }
     });
-    wsClient.connect(accessToken);
+    await wsClient.connect(accessToken, Duration(seconds: 5));
     // Send message
     // TODO actually encrypt the message using the public key of the user
     var messageToSendStr = 'Hello, World!';

@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/io.dart';
 import 'models/ws_message.dart';
 import 'models/ws_response.dart';
 
@@ -14,17 +16,22 @@ class WsClient {
   WsClient(this._url, {this.onReceived});
 
   /// Connect to the WebSocket server
-  void connect(String oneTimeAccessToken) {
-    // Connect to the WebSocket server
-    _channel = WebSocketChannel.connect(
-        Uri.parse('$_url?wsAccessToken=$oneTimeAccessToken'));
+  Future<void> connect(String oneTimeAccessToken, Duration timeout) async {
+    try {
+      final uri = Uri.parse('$_url?wsAccessToken=$oneTimeAccessToken');
+      final socket = await WebSocket.connect(uri.toString()).timeout(timeout);
 
-    // Listen for incoming messages
-    _channel!.stream.listen((data) {
-      if (onReceived != null) {
-        onReceived!(WsResponse.fromUint8List(data));
-      }
-    });
+      _channel = IOWebSocketChannel(socket);
+
+      // Listen for incoming messages
+      _channel!.stream.listen((data) {
+        if (onReceived != null) {
+          onReceived!(WsResponse.fromUint8List(data));
+        }
+      });
+    } catch (e) {
+      throw Exception('WebSocket connection timeout or failed: $e');
+    }
   }
 
   /// Check if the WebSocket connection is established
