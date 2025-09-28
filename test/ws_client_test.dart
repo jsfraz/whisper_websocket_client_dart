@@ -107,7 +107,7 @@ void main() {
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
             print(
-                'UserID: ${message.senderId} Message length: ${message.message.length}');
+                'UserID: ${message.senderId} Message length: ${message.content.length}');
           }
           break;
         case WsResponseType.error:
@@ -140,7 +140,7 @@ void main() {
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
             print(
-                'UserID: ${message.senderId} Message length: ${message.message.length}');
+                'UserID: ${message.senderId} Message length: ${message.content.length}');
           }
           break;
         case WsResponseType.error:
@@ -157,9 +157,11 @@ void main() {
     // TODO Encrypt the message using the public key of the user
     var messageToSendStr = 'Hello, World!';
     var key = Uint8List(32);
+    var nonce = Uint8List(12);
+    var mac = Uint8List(32);
     print('Sending message: $messageToSendStr');
     var messageToSend = WsMessage.privateMessage(
-        NewPrivateMessage(userId, utf8.encode(messageToSendStr), key));
+        NewPrivateMessage(userId, utf8.encode(messageToSendStr), key, nonce, mac));
     for (var i = 0; i < 5; i++) {
       var sentTime = wsClient.sendMessage(messageToSend);
       print('Message sent at: $sentTime');
@@ -182,7 +184,7 @@ void main() {
     var wsClient = WsClient(getWsUrl(serverUrl));
     expect(
         () => wsClient.sendMessage(WsMessage.privateMessage(
-            NewPrivateMessage(userId, utf8.encode('Hello, World!'), Uint8List(32)))),
+            NewPrivateMessage(userId, utf8.encode('Hello, World!'), Uint8List(32), Uint8List(12), Uint8List(32)))),
         throwsA(TypeMatcher<Exception>()));
   });
 }
