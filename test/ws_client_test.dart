@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:basic_utils/basic_utils.dart';
 import 'package:test/test.dart';
 import 'package:whisper_openapi_client_dart/api.dart';
@@ -20,8 +21,7 @@ void main() {
 
   // Setup variables
   setUpAll(() {
-    var env = DotEnv(includePlatformEnvironment: true)
-      ..load(['.env.dev']);
+    var env = DotEnv(includePlatformEnvironment: true)..load(['.env.dev']);
     serverUrl = env['SERVER_URL'] ?? '';
     inviteCode = env['INVITE_CODE'] ?? '';
     publicKeyPem = File('publicKey.pem').readAsStringSync();
@@ -103,10 +103,11 @@ void main() {
       // Print received message
       switch (wsResponse.type) {
         case WsResponseType.messages:
-          // TODO decrypt message
+          // TODO Decrypt message using my private key
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
-            print('UseID: ${message.senderId} Message: ${message.message}');
+            print(
+                'UserID: ${message.senderId} Message length: ${message.message.length}');
           }
           break;
         case WsResponseType.error:
@@ -114,19 +115,19 @@ void main() {
           print('Received error: $error');
           break;
         default:
-        print('Response type: ${wsResponse.type}');
-        break;
+          print('Response type: ${wsResponse.type}');
+          break;
       }
     });
     await wsClient.connect(accessToken, Duration(seconds: 5));
-    // Wait for 5 seconds
-    await Future.delayed(Duration(seconds: 5));
+    // Wait for 60 seconds
+    await Future.delayed(Duration(seconds: 60));
     // Close WebSocket connection
     wsClient.disconnect();
-  });
+  }, timeout: Timeout(Duration(seconds: 70)));
 
   // Test connecting to the server and sending message to self
-  // NOTE: Sending message to self wont work, I am doing this while debuging the server.
+  // NOTE: Sending message to self won't work in production.
   test('connectAndSendMessageToSelf', () async {
     // Get access token
     var accessToken = await getOneTimeAccessToken();
@@ -138,7 +139,8 @@ void main() {
           // TODO Decrypt message using my private key
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
-            print('UseID: ${message.senderId} Message: ${message.message}');
+            print(
+                'UserID: ${message.senderId} Message length: ${message.message.length}');
           }
           break;
         case WsResponseType.error:
@@ -146,17 +148,18 @@ void main() {
           print('Received error: $error');
           break;
         default:
-        print('Response type: ${wsResponse.type}');
-        break;
+          print('Response type: ${wsResponse.type}');
+          break;
       }
     });
     await wsClient.connect(accessToken, Duration(seconds: 5));
     // Send message
     // TODO Encrypt the message using the public key of the user
     var messageToSendStr = 'Hello, World!';
+    var key = Uint8List(32);
     print('Sending message: $messageToSendStr');
     var messageToSend = WsMessage.privateMessage(
-        NewPrivateMessage(userId, utf8.encode(messageToSendStr)));
+        NewPrivateMessage(userId, utf8.encode(messageToSendStr), key));
     for (var i = 0; i < 5; i++) {
       var sentTime = wsClient.sendMessage(messageToSend);
       print('Message sent at: $sentTime');
@@ -179,7 +182,7 @@ void main() {
     var wsClient = WsClient(getWsUrl(serverUrl));
     expect(
         () => wsClient.sendMessage(WsMessage.privateMessage(
-            NewPrivateMessage(userId, utf8.encode('Hello, World!')))),
+            NewPrivateMessage(userId, utf8.encode('Hello, World!'), Uint8List(32)))),
         throwsA(TypeMatcher<Exception>()));
   });
 }
