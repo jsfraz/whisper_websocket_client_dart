@@ -21,7 +21,7 @@ void main() {
   // Setup variables
   setUpAll(() {
     var env = DotEnv(includePlatformEnvironment: true)
-      ..load(['.env.development']);
+      ..load(['.env.dev']);
     serverUrl = env['SERVER_URL'] ?? '';
     inviteCode = env['INVITE_CODE'] ?? '';
     publicKeyPem = File('publicKey.pem').readAsStringSync();
@@ -43,7 +43,7 @@ void main() {
     if (response == null) {
       throw Exception('Failed to create user');
     } else {
-      print('Write your user ID to .env.development file: ${response.id}');
+      print('Write your user ID to .env.dev file: ${response.id}');
     }
   });
 
@@ -135,7 +135,7 @@ void main() {
       // Print received message
       switch (wsResponse.type) {
         case WsResponseType.messages:
-          // TODO decrypt message
+          // TODO Decrypt message using my private key
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
             print('UseID: ${message.senderId} Message: ${message.message}');
@@ -152,7 +152,7 @@ void main() {
     });
     await wsClient.connect(accessToken, Duration(seconds: 5));
     // Send message
-    // TODO actually encrypt the message using the public key of the user
+    // TODO Encrypt the message using the public key of the user
     var messageToSendStr = 'Hello, World!';
     print('Sending message: $messageToSendStr');
     var messageToSend = WsMessage.privateMessage(
