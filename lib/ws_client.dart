@@ -16,9 +16,9 @@ class WsClient {
   WsClient(this._url, {this.onReceived});
 
   /// Connect to the WebSocket server
-  Future<void> connect(String oneTimeAccessToken, String deviceId, Duration timeout) async {
+  Future<void> connect(String oneTimeAccessToken, Duration timeout) async {
     try {
-      final uri = Uri.parse('$_url?wsAccessToken=$oneTimeAccessToken&deviceId=$deviceId');
+      final uri = Uri.parse('$_url?wsAccessToken=$oneTimeAccessToken');
       final socket = await WebSocket.connect(uri.toString()).timeout(timeout);
 
       _channel = IOWebSocketChannel(socket);
