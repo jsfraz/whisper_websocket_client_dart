@@ -2,10 +2,5 @@
 enum WsResponseType {
   error,
   messages,
-  deleteAccount,
-  linkRequest,
-  receiveKey,
-  linkRejected,
-  deviceRevoked,
-  delivered
+  deleteAccount
 }

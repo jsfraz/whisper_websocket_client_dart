@@ -2,8 +2,6 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'private_message.dart';
 import 'ws_response_type.dart';
-import 'link_request_payload.dart';
-import 'receive_key_payload.dart';
 
 /// A response received from the WebSocket server
 class WsResponse {
@@ -36,17 +34,7 @@ class WsResponse {
             .toList();
         payload = messages;
         break;
-      // Requests
-      case WsResponseType.linkRequest:
-        payload = LinkRequestPayload.fromJson(json['payload'] as Map<String, dynamic>);
-        break;
-      case WsResponseType.receiveKey:
-        payload = ReceiveKeyPayload.fromJson(json['payload'] as Map<String, dynamic>);
-        break;
-      // Empty payloads
-      case WsResponseType.linkRejected:
-      case WsResponseType.deviceRevoked:
-      case WsResponseType.delivered:
+      // Delete account
       case WsResponseType.deleteAccount:
         payload = null;
         break;
