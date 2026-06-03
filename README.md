@@ -28,6 +28,37 @@ wsClient.disconnect();
 
 For more detailed example see [test/ws_client_test.dart](test/ws_client_test.dart).
 
+## Sending media (images, gifs, videos, voice)
+
+Media files are transferred over HTTP, not over the WebSocket. The file is
+encrypted locally and uploaded as ciphertext; only a small encrypted reference
+to it travels inside a normal private message, so the server never learns
+anything about the media (zero-knowledge). The server stores the file on disk
+with a TTL and deletes it after the recipient downloads it once (or when the
+TTL expires).
+
+Sender flow:
+
+1. Encrypt the media file locally and upload the ciphertext with
+   `MediaApi.uploadMedia(receiverId, file)` from `whisper_openapi_client_dart`,
+   which returns the media `id`.
+2. Build a `MediaReference(id, key, type, size, ...)` describing the upload
+   (including the symmetric `key` needed to decrypt it).
+3. Serialize the reference (`mediaReference.toJson()`), encrypt it the same way
+   text messages are encrypted, and send it as the `content` of a
+   `NewPrivateMessage`.
+
+Recipient flow:
+
+1. Decrypt the received message `content` and parse it with
+   `MediaReference.fromJson(...)`.
+2. Download the ciphertext via `MediaApi.downloadMedia(mediaReference.mediaId)`.
+3. Decrypt it locally using `mediaReference.key`.
+4. Only after the file is successfully downloaded, decrypted and persisted, call
+   `MediaApi.confirmMediaDownload(mediaReference.mediaId)` to delete it from the
+   server. The download is retriable until confirmed; if the client never
+   confirms, the file is removed once its server-side TTL expires.
+
 ## Dependencies
 
 - [web_socket_channel](https://pub.dev/packages/web_socket_channel)
