@@ -18,7 +18,6 @@ whisper_websocket_client_dart:
 import 'package:whisper_websocket_client_dart/ws_client.dart';
 
 var wsClient = WsClient('ws://localhost:8080/ws', onReceived: (wsResponse) {
-    // TODO handle server response
 });
 await wsClient.connect(accessToken, Duration(seconds: 5));
 
@@ -89,5 +88,3 @@ The live integration test (`test/ws_client_test.dart`) needs a running server, a
   - used for JWT token handling
 - [whisper_openapi_client_dart](https://github.com/jsfraz/whisper_openapi_client_dart)
   - used for API communication with Whisper server
-
-<!-- TODO license -->
