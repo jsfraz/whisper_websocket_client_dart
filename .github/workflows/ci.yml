@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: Analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Get dependencies
+        run: dart pub get
+
+      - name: Format (changed files)
+        run: |
+          BASE="origin/${{ github.base_ref || 'main' }}"
+          git fetch origin "${{ github.base_ref || 'main' }}" 2>/dev/null || true
+          FILES=$(git diff --name-only --diff-filter=ACMR "$BASE"...HEAD -- '*.dart' | tr '\n' ' ')
+          if [ -z "$FILES" ]; then
+            echo "No changed Dart files."
+            exit 0
+          fi
+          dart format --output=none --set-exit-if-changed $FILES
+
+      - name: Analyze
+        run: dart analyze
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

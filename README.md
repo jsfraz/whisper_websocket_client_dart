@@ -59,6 +59,15 @@ Recipient flow:
    server. The download is retriable until confirmed; if the client never
    confirms, the file is removed once its server-side TTL expires.
 
+
+## CI
+
+One workflow, `ci.yml`, runs on pull requests and on pushes to `main`: format check on changed files, `dart analyze`, and a secret scan.
+
+No repository secrets are required. `GITHUB_TOKEN` is provided automatically and is only used by the secret scan.
+
+The live integration test (`test/ws_client_test.dart`) needs a running server, an invite code, a user id and the RSA key pair, so it does not run in CI. Run it locally against `whisper-server` before changing the protocol.
+
 ## Dependencies
 
 - [web_socket_channel](https://pub.dev/packages/web_socket_channel)
