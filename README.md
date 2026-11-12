@@ -2,6 +2,13 @@
 
 A WebSocket client for Whisper messaging server.
 
+## AI / MCP tooling
+
+Developed alongside `whisper-server` (see `../whisper-server/README.md`). The agent's Dart MCP
+server is configured globally in `~/.config/opencode/opencode.json`; setup lives in the
+`whisper` app README. Its live integration test needs a running server — do not run it from an
+autonomous loop.
+
 ## Installation
 
 Add the following dependency to your pubspec.yaml
