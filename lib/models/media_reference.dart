@@ -37,6 +37,11 @@ class MediaReference {
   /// Optional duration in milliseconds (videos, voice messages).
   final int? durationMs;
 
+  /// Original file name including the extension, for [MediaType.file] and any
+  /// other attachment whose name should survive (shown in the bubble and used
+  /// when saving).
+  final String? fileName;
+
   MediaReference(
     this.mediaId,
     this.key,
@@ -45,6 +50,7 @@ class MediaReference {
     this.width,
     this.height,
     this.durationMs,
+    this.fileName,
   });
 
   MediaReference.fromJson(Map<String, dynamic> json)
@@ -54,7 +60,8 @@ class MediaReference {
         size = json['size'] as int,
         width = json['width'] as int?,
         height = json['height'] as int?,
-        durationMs = json['durationMs'] as int?;
+        durationMs = json['durationMs'] as int?,
+        fileName = json['fileName'] as String?;
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
@@ -71,6 +78,9 @@ class MediaReference {
     }
     if (durationMs != null) {
       json['durationMs'] = durationMs;
+    }
+    if (fileName != null) {
+      json['fileName'] = fileName;
     }
     return json;
   }

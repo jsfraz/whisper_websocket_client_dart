@@ -7,4 +7,8 @@ enum MediaType {
   gif,
   video,
   voice,
+
+  /// Arbitrary file (documents, archives, ...). The name, including the
+  /// extension, travels in [MediaReference.fileName].
+  file,
 }
