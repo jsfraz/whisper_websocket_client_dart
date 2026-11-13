@@ -22,9 +22,26 @@ whisper_websocket_client_dart:
 ## Usage
 
 ```dart
+import 'package:whisper_websocket_client_dart/models/private_message.dart';
+import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
 import 'package:whisper_websocket_client_dart/ws_client.dart';
 
 var wsClient = WsClient('ws://localhost:8080/ws', onReceived: (wsResponse) {
+  switch (wsResponse.type) {
+    case WsResponseType.messages:
+      // Encrypted messages; decrypt each content with your private key
+      var messages = wsResponse.payload as List<PrivateMessage>;
+      for (var message in messages) {
+        print('UserID: ${message.senderId} Message length: ${message.content.length}');
+      }
+      break;
+    case WsResponseType.error:
+      print('Received error: ${wsResponse.payload}');
+      break;
+    case WsResponseType.deleteAccount:
+      print('Account deleted');
+      break;
+  }
 });
 await wsClient.connect(accessToken, Duration(seconds: 5));
 
@@ -95,3 +112,7 @@ The live integration test (`test/ws_client_test.dart`) needs a running server, a
   - used for JWT token handling
 - [whisper_openapi_client_dart](https://github.com/jsfraz/whisper_openapi_client_dart)
   - used for API communication with Whisper server
+
+## License
+
+[MIT](LICENSE)
