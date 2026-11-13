@@ -19,7 +19,7 @@ void main() {
   late String inviteCode;
   late String publicKeyPem;
   late String privateKeyPem;
-  late int userId;
+  late String userId;
   late RSAPublicKey publicKey;
   late RSAPrivateKey privateKey;
 
@@ -30,7 +30,7 @@ void main() {
     inviteCode = env['INVITE_CODE'] ?? '';
     publicKeyPem = File('publicKey.pem').readAsStringSync();
     privateKeyPem = File('privateKey.pem').readAsStringSync();
-    userId = int.tryParse(env['USER_ID'] ?? '') ?? 0;
+    userId = env['USER_ID'] ?? '';
     publicKey = CryptoUtils.rsaPublicKeyFromPem(publicKeyPem);
     privateKey = CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem);
   });
@@ -53,7 +53,7 @@ void main() {
       print('Write your user ID to .env.dev file: ${response.id}');
     } on ApiException catch (e) {
       // The invite is single use: an already registered account is fine
-      if (userId == 0) {
+      if (userId.isEmpty) {
         rethrow;
       }
       print('Account already registered as USER_ID=$userId (${e.message})');

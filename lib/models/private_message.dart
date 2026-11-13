@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 /// A message received from a private chat
 class PrivateMessage {
-  final int senderId;
+  final String senderId;
   final Uint8List content; // Encrypted content
   final Uint8List key; // Encrypted symmetric key
   final Uint8List nonce; // Unique nonce for encryption
@@ -11,7 +11,7 @@ class PrivateMessage {
   final bool recipientOnline;
 
   PrivateMessage.fromJson(Map<String, dynamic> json)
-      : senderId = json['senderId'] as int,
+      : senderId = json['senderId'] as String,
         content = Uint8List.fromList(List<int>.from(json['content'])),
         key = Uint8List.fromList(List<int>.from(json['key'])),
         nonce = Uint8List.fromList(List<int>.from(json['nonce'])),

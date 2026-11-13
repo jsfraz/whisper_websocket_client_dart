@@ -19,3 +19,5 @@ dev_dependencies:
   whisper_openapi_client_dart:
     git:
       url: https://github.com/jsfraz/whisper_openapi_client_dart.git
+      # Tests follow the client's development branch: API changes land there first
+      ref: development
