@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'delivery_ack.dart';
 import 'private_message.dart';
 import 'ws_response_type.dart';
 
@@ -37,6 +38,10 @@ class WsResponse {
       // Delete account
       case WsResponseType.deleteAccount:
         payload = null;
+        break;
+      // Delivery acknowledgement of an outgoing message
+      case WsResponseType.ack:
+        payload = DeliveryAck.fromJson(json['payload'] as Map<String, dynamic>);
         break;
       // Error
       case WsResponseType.error:

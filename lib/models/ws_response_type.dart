@@ -2,5 +2,8 @@
 enum WsResponseType {
   error,
   messages,
-  deleteAccount
+  deleteAccount,
+
+  /// The server accepted an outgoing message (delivered or queued).
+  ack
 }
