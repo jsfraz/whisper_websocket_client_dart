@@ -17,6 +17,8 @@ import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart' as djwt;
 void main() {
   late String serverUrl;
   late String inviteCode;
+  late String username;
+  late String adminSearch;
   late String publicKeyPem;
   late String privateKeyPem;
   late String userId;
@@ -28,6 +30,9 @@ void main() {
     var env = DotEnv(includePlatformEnvironment: true)..load(['.env.dev']);
     serverUrl = env['SERVER_URL'] ?? '';
     inviteCode = env['INVITE_CODE'] ?? '';
+    // A used invite cannot register again, so a re-run needs a new name.
+    username = env['USERNAME'] ?? 'wsUnitTest';
+    adminSearch = env['ADMIN_SEARCH'] ?? 'admin';
     publicKeyPem = File('publicKey.pem').readAsStringSync();
     privateKeyPem = File('privateKey.pem').readAsStringSync();
     userId = env['USER_ID'] ?? '';
@@ -45,7 +50,7 @@ void main() {
           createUserInput: CreateUserInput(
               inviteCode: inviteCode,
               publicKey: publicKeyPem,
-              username: 'wsUnitTest'));
+              username: username));
       // Check response
       if (response == null) {
         throw Exception('Failed to create user');
@@ -64,10 +69,15 @@ void main() {
   Future<ApiClient> getAuthenticatedApiClient() async {
     var apiClient = ApiClient(basePath: serverUrl);
     var authApi = AuthenticationApi(apiClient);
+    // The login token is single use: the server spends this challenge on the
+    // authUser call below.
+    var challenge = await authApi.authChallenge();
     // Generate JWT
-    final jwt = djwt.JWT({'sub': userId});
+    final jwt = djwt.JWT({'sub': userId, 'nonce': challenge?.challenge});
     Duration expiresIn = Duration(seconds: 5);
-    Duration notBefore = Duration.zero;
+    // dart_jsonwebtoken writes nbf = now + notBefore, so a negative value
+    // backdates the token and a server clock a few seconds behind is fine.
+    Duration notBefore = const Duration(seconds: -30);
     final token = jwt.sign(
         djwt.RSAPrivateKey.raw(CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem)),
         algorithm: djwt.JWTAlgorithm.RS256,
@@ -210,10 +220,12 @@ void main() {
   test('sendMessageToAdmin', () async {
     var apiClient = await getAuthenticatedApiClient();
     // Find admin among the searched users
-    var users = await UserApi(apiClient).searchUsers('admin');
+    var users = await UserApi(apiClient).searchUsers(adminSearch);
     var admins = users?.where((u) => u.admin).toList() ?? [];
     if (admins.isEmpty) {
-      throw Exception('Admin user not found');
+      final found = users?.map((u) => '${u.username} (admin: ${u.admin})');
+      throw Exception(
+          'Admin user not found for ADMIN_SEARCH=$adminSearch, found: $found');
     }
     var admin = admins.first;
     // Encrypt with the admin public key

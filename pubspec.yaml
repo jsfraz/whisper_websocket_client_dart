@@ -21,3 +21,8 @@ dev_dependencies:
       url: https://github.com/jsfraz/whisper_openapi_client_dart.git
       # Tests follow the client's development branch: API changes land there first
       ref: development
+
+# The live tests use the monorepo client, not the published tag.
+dependency_overrides:
+  whisper_openapi_client_dart:
+    path: ../whisper_openapi_client_dart
