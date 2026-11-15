@@ -15,11 +15,16 @@ class WsClient {
 
   WsClient(this._url, {this.onReceived});
 
-  /// Connect to the WebSocket server
+  /// Connect to the WebSocket server.
+  ///
+  /// The one-time token travels in the Authorization header, not in the query
+  /// string: URLs end up in proxy access logs, headers do not.
   Future<void> connect(String oneTimeAccessToken, Duration timeout) async {
     try {
-      final uri = Uri.parse('$_url?wsAccessToken=$oneTimeAccessToken');
-      final socket = await WebSocket.connect(uri.toString()).timeout(timeout);
+      final socket = await WebSocket.connect(
+        _url,
+        headers: {'Authorization': 'Bearer $oneTimeAccessToken'},
+      ).timeout(timeout);
 
       _channel = IOWebSocketChannel(socket);
 
