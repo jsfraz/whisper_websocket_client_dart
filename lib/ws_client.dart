@@ -26,16 +26,37 @@ class WsClient {
         headers: {'Authorization': 'Bearer $oneTimeAccessToken'},
       ).timeout(timeout);
 
-      _channel = IOWebSocketChannel(socket);
+      final channel = IOWebSocketChannel(socket);
+      _channel = channel;
 
-      // Listen for incoming messages
-      _channel!.stream.listen((data) {
-        if (onReceived != null) {
-          onReceived!(WsResponse.fromUint8List(data));
-        }
-      });
+      // A closed or broken channel must clear itself: `isConnected` reads
+      // _channel, and a stale reference would keep the app "online" forever.
+      channel.stream.listen(
+        (data) {
+          final handler = onReceived;
+          if (handler == null) {
+            return;
+          }
+          // A malformed frame must not kill the subscription.
+          try {
+            handler(WsResponse.fromUint8List(data));
+          } catch (_) {
+            // Ignored: the next frame is still delivered.
+          }
+        },
+        onDone: () => _clear(channel),
+        onError: (Object _) => _clear(channel),
+        cancelOnError: true,
+      );
     } catch (e) {
       throw Exception('WebSocket connection timeout or failed: $e');
+    }
+  }
+
+  /// Forgets [channel] unless a newer connection replaced it.
+  void _clear(WebSocketChannel channel) {
+    if (identical(_channel, channel)) {
+      _channel = null;
     }
   }
 
@@ -44,23 +65,22 @@ class WsClient {
     return _channel != null && _channel!.closeCode == null;
   }
 
-  /// Disconnect from the WebSocket server
+  /// Disconnect from the WebSocket server. Safe to call when not connected.
   void disconnect() {
-    if (_channel != null) {
-      _channel!.sink.close();
-      _channel = null;
-    } else {
-      throw Exception('WebSocket connection not established');
-    }
+    final channel = _channel;
+    _channel = null;
+    channel?.sink.close();
   }
 
-  /// Send a message to the WebSocket server
-  DateTime sendMessage(WsMessage message) {
-    if (_channel != null) {
-      _channel!.sink.add(utf8.encode(jsonEncode(message)));
-      return DateTime.now();
-    } else {
+  /// Send a message to the WebSocket server.
+  ///
+  /// Delivery is confirmed by the server (see [WsResponseType.ack]); writing to
+  /// the sink proves nothing, so there is no return value to misinterpret.
+  void sendMessage(WsMessage message) {
+    final channel = _channel;
+    if (channel == null) {
       throw Exception('WebSocket connection not established');
     }
+    channel.sink.add(utf8.encode(jsonEncode(message)));
   }
 }

@@ -36,6 +36,11 @@ jobs:
       - name: Analyze
         run: dart analyze
 
+      - name: Unit tests (frame parsing, no server needed)
+        # ws_client_test.dart is an integration test against a live server and
+        # needs .env.dev plus an account; it stays manual.
+        run: dart test test/ws_response_test.dart
+
       - name: Secret scan
         uses: gitleaks/gitleaks-action@v2
         env:

@@ -53,14 +53,17 @@ class MediaReference {
     this.fileName,
   });
 
+  /// Parses a reference from decrypted message content. The data comes from the
+  /// other side, so numbers are read as [num]: JSON has no int/double
+  /// distinction and `1.0` would otherwise throw.
   MediaReference.fromJson(Map<String, dynamic> json)
       : mediaId = json['mediaId'] as String,
         key = Uint8List.fromList(List<int>.from(json['key'])),
         type = MediaType.values.byName(json['type'] as String),
-        size = json['size'] as int,
-        width = json['width'] as int?,
-        height = json['height'] as int?,
-        durationMs = json['durationMs'] as int?,
+        size = (json['size'] as num).toInt(),
+        width = (json['width'] as num?)?.toInt(),
+        height = (json['height'] as num?)?.toInt(),
+        durationMs = (json['durationMs'] as num?)?.toInt(),
         fileName = json['fileName'] as String?;
 
   Map<String, dynamic> toJson() {

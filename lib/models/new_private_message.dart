@@ -10,7 +10,8 @@ class NewPrivateMessage {
   final DateTime sentAt;
 
   factory NewPrivateMessage(String receiverId, Uint8List content, Uint8List key,
-      Uint8List nonce, Uint8List mac, {DateTime? sentAt}) {
+      Uint8List nonce, Uint8List mac,
+      {DateTime? sentAt}) {
     return NewPrivateMessage._internal(
         receiverId, content, key, nonce, mac, sentAt ?? DateTime.now());
   }

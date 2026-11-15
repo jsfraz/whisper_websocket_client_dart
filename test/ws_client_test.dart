@@ -194,8 +194,7 @@ void main() {
         encrypted['nonce']!,
         encrypted['mac']!));
     for (var i = 0; i < 5; i++) {
-      var sentTime = wsClient.sendMessage(messageToSend);
-      print('Message sent at: $sentTime');
+      wsClient.sendMessage(messageToSend);
       await Future.delayed(Duration(milliseconds: 500));
     }
     // Wait for 5 seconds
@@ -231,14 +230,12 @@ void main() {
     var wsClient = WsClient(getWsUrl(serverUrl));
     await wsClient.connect(wsAuthResponse.accessToken, Duration(seconds: 5));
     print('Sending message to admin (id ${admin.id}): $messageToSendStr');
-    var sentTime = wsClient.sendMessage(WsMessage.privateMessage(
-        NewPrivateMessage(
-            admin.id,
-            encrypted['encryptedData']!,
-            encrypted['encryptedKey']!,
-            encrypted['nonce']!,
-            encrypted['mac']!)));
-    print('Message sent at: $sentTime');
+    wsClient.sendMessage(WsMessage.privateMessage(NewPrivateMessage(
+        admin.id,
+        encrypted['encryptedData']!,
+        encrypted['encryptedKey']!,
+        encrypted['nonce']!,
+        encrypted['mac']!)));
     await Future.delayed(Duration(seconds: 2));
     wsClient.disconnect();
   });
