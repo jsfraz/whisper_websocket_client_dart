@@ -72,6 +72,14 @@ class WsClient {
     channel?.sink.close();
   }
 
+  /// Ask for every archived message above [sinceSeq].
+  ///
+  /// This is what a reconnect does instead of receiving a full queue dump: the
+  /// server answers with [WsResponseType.synced] carrying only the delta.
+  void sendSync(int sinceSeq) {
+    sendMessage(WsMessage.sync(sinceSeq));
+  }
+
   /// Send a message to the WebSocket server.
   ///
   /// Delivery is confirmed by the server (see [WsResponseType.ack]); writing to

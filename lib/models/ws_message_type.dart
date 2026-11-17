@@ -2,7 +2,7 @@
 enum WsMessageType {
   message,
 
-  /// Confirms the client stored received messages, so the server may drop them
-  /// from the offline queue.
-  ack
+  /// Asks for the archive delta above the client's cursor. Replaces the old
+  /// full offline-queue drain.
+  sync
 }

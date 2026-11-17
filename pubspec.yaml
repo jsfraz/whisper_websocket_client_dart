@@ -1,6 +1,6 @@
 name: whisper_websocket_client_dart
 description: WebSocket client for Whisper messaging server.
-version: 1.0.0
+version: 0.1.0
 repository: https://github.com/jsfraz/whisper_websocket_client_dart
 
 environment:
@@ -19,8 +19,9 @@ dev_dependencies:
   whisper_openapi_client_dart:
     git:
       url: https://github.com/jsfraz/whisper_openapi_client_dart.git
-      # Tests follow the client's development branch: API changes land there first
-      ref: development
+      # Pinned to the released client instead of a moving branch: the app and
+      # this package must agree on the contract.
+      ref: v0.1.0
 
 # The live tests use the monorepo client, not the published tag.
 dependency_overrides:

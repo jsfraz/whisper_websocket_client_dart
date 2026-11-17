@@ -1,6 +1,6 @@
-import 'delivery_ack.dart';
 import 'new_private_message.dart';
 import 'ws_message_type.dart';
+import 'ws_sync.dart';
 
 /// A message to be sent to the WebSocket server
 class WsMessage {
@@ -15,11 +15,9 @@ class WsMessage {
     return WsMessage._internal(WsMessageType.message, privateMessage);
   }
 
-  /// Message confirming that [messages] are stored locally.
-  factory WsMessage.ack(List<AckedMessage> messages) {
-    return WsMessage._internal(WsMessageType.ack, {
-      'messages': messages.map((message) => message.toJson()).toList(),
-    });
+  /// Message asking for the archive delta above the client's cursor.
+  factory WsMessage.sync(int sinceSeq) {
+    return WsMessage._internal(WsMessageType.sync, WsSync(sinceSeq));
   }
 
   Map<String, dynamic> toJson() {

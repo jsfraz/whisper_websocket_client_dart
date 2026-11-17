@@ -4,6 +4,9 @@ enum WsResponseType {
   messages,
   deleteAccount,
 
-  /// The server accepted an outgoing message (delivered or queued).
-  ack
+  /// The server accepted an outgoing message into the archive.
+  ack,
+
+  /// Answer to a sync request: the archive delta.
+  synced
 }

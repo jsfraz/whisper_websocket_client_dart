@@ -11,6 +11,7 @@ import 'package:whisper_websocket_client_dart/models/new_private_message.dart';
 import 'package:whisper_websocket_client_dart/models/private_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
+import 'package:whisper_websocket_client_dart/version.dart';
 import 'package:whisper_websocket_client_dart/ws_client.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart' as djwt;
 
@@ -65,15 +66,24 @@ void main() {
     }
   });
 
+  // The live server refuses a client below its minimum, and a login names the
+  // device it comes from. One constant is enough for a dev account.
+  const deviceId = '00000000-0000-4000-8000-000000000001';
+
   // Get an authenticated API client (RSA JWT -> access token)
   Future<ApiClient> getAuthenticatedApiClient() async {
     var apiClient = ApiClient(basePath: serverUrl);
+    apiClient.addDefaultHeader('X-Client-Version', clientVersion);
     var authApi = AuthenticationApi(apiClient);
     // The login token is single use: the server spends this challenge on the
     // authUser call below.
     var challenge = await authApi.authChallenge();
     // Generate JWT
-    final jwt = djwt.JWT({'sub': userId, 'nonce': challenge?.challenge});
+    final jwt = djwt.JWT({
+      'sub': userId,
+      'did': deviceId,
+      'nonce': challenge?.challenge,
+    });
     Duration expiresIn = Duration(seconds: 5);
     // dart_jsonwebtoken writes nbf = now + notBefore, so a negative value
     // backdates the token and a server clock a few seconds behind is fine.
@@ -85,8 +95,13 @@ void main() {
         notBefore: notBefore,
         noIssueAt: false);
     // Auth user
-    var authResponse =
-        await authApi.authUser(authUserInput: AuthUserInput(token: token));
+    var authResponse = await authApi.authUser(
+        authUserInput: AuthUserInput(
+      token: token,
+      deviceId: deviceId,
+      label: 'live test',
+      platform: 'linux',
+    ));
     if (authResponse == null) {
       throw Exception('Failed to authenticate user');
     }

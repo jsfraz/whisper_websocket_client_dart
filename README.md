@@ -17,6 +17,7 @@ Add the following dependency to your pubspec.yaml
 whisper_websocket_client_dart:
     git:
       url: https://github.com/jsfraz/whisper_websocket_client_dart.git
+      ref: v0.1.0
 ```
 
 ## Usage
@@ -35,6 +36,15 @@ var wsClient = WsClient('ws://localhost:8080/ws', onReceived: (wsResponse) {
         print('UserID: ${message.senderId} Message length: ${message.content.length}');
       }
       break;
+    case WsResponseType.synced:
+      // Answer to a sync request: only what the archive gained while offline.
+      var synced = wsResponse.payload as Synced;
+      print('Missed ${synced.messages.length} messages, cursor ${synced.syncedThrough}');
+      if (synced.hasMore) wsClient.sendSync(synced.syncedThrough);
+      break;
+    case WsResponseType.ack:
+      // The server stored the outgoing message in the archive.
+      break;
     case WsResponseType.error:
       print('Received error: ${wsResponse.payload}');
       break;
@@ -44,6 +54,8 @@ var wsClient = WsClient('ws://localhost:8080/ws', onReceived: (wsResponse) {
   }
 });
 await wsClient.connect(accessToken, Duration(seconds: 5));
+// Nothing is pushed on connect: ask for the delta above the last stored seq.
+wsClient.sendSync(0);
 
 await Future.delayed(Duration(seconds: 5));
 wsClient.disconnect();

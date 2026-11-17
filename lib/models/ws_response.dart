@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'delivery_ack.dart';
 import 'private_message.dart';
+import 'synced.dart';
 import 'ws_response_type.dart';
 
 /// A response received from the WebSocket server
@@ -65,6 +66,14 @@ class WsResponse {
             throw const FormatException('ack payload is not an object');
           }
           payload = DeliveryAck.fromJson(rawAck);
+          break;
+        // Archive delta after a sync request
+        case WsResponseType.synced:
+          final rawSynced = json['payload'];
+          if (rawSynced is! Map<String, dynamic>) {
+            throw const FormatException('synced payload is not an object');
+          }
+          payload = Synced.fromJson(rawSynced);
           break;
         // Delete account
         case WsResponseType.deleteAccount:
