@@ -15,9 +15,13 @@ class WsMessage {
     return WsMessage._internal(WsMessageType.message, privateMessage);
   }
 
-  /// Message asking for the archive delta above the client's cursor.
-  factory WsMessage.sync(int sinceSeq) {
-    return WsMessage._internal(WsMessageType.sync, WsSync(sinceSeq));
+  /// Message asking for the archive delta above the client's cursor, and the
+  /// mutation log above [sinceEventSeq] when it is given.
+  factory WsMessage.sync(int sinceSeq, {int? sinceEventSeq}) {
+    return WsMessage._internal(
+      WsMessageType.sync,
+      WsSync(sinceSeq, sinceEventSeq: sinceEventSeq),
+    );
   }
 
   Map<String, dynamic> toJson() {

@@ -149,8 +149,8 @@ void main() {
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
             try {
-              var content = decryptMessage(message.content, message.key,
-                  message.nonce, message.mac, privateKey);
+              var content = decryptMessage(message.content!, message.key!,
+                  message.nonce!, message.mac!, privateKey);
               print('UserID: ${message.senderId} Message: $content');
             } catch (e) {
               print('Failed to decrypt message from ${message.senderId}: $e');
@@ -188,8 +188,8 @@ void main() {
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
             try {
-              var content = decryptMessage(message.content, message.key,
-                  message.nonce, message.mac, privateKey);
+              var content = decryptMessage(message.content!, message.key!,
+                  message.nonce!, message.mac!, privateKey);
               decryptedMessages.add(content);
               print('UserID: ${message.senderId} Message: $content');
             } catch (e) {

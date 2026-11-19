@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 import 'package:whisper_websocket_client_dart/models/delivery_ack.dart';
+import 'package:whisper_websocket_client_dart/models/message_event.dart';
 import 'package:whisper_websocket_client_dart/models/synced.dart';
 import 'package:whisper_websocket_client_dart/models/ws_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_response.dart';
@@ -71,8 +72,8 @@ void main() {
     expect(synced.syncedThrough, 7);
     expect(synced.hasMore, isFalse);
     expect(synced.messages.single.seq, 7);
-    expect(synced.messages.single.peerId,
-        '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12');
+    expect(
+        synced.messages.single.peerId, '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12');
     expect(synced.peers.single.username, 'sender');
   });
 
@@ -80,6 +81,14 @@ void main() {
     final json = jsonDecode(jsonEncode(WsMessage.sync(15).toJson()));
     expect(json['type'], 'sync');
     expect(json['payload']['sinceSeq'], 15);
+    expect(json['payload'].containsKey('sinceEventSeq'), isFalse);
+  });
+
+  test('a sync request can also ask for the mutation log', () {
+    final json =
+        jsonDecode(jsonEncode(WsMessage.sync(15, sinceEventSeq: 4).toJson()));
+    expect(json['payload']['sinceSeq'], 15);
+    expect(json['payload']['sinceEventSeq'], 4);
   });
 
   // A parser that throws kills the stream subscription and the client goes
@@ -127,11 +136,135 @@ void main() {
     expect(client.isConnected, isFalse);
   });
 
-  test('an unknown response type is reported as an error, not a crash', () {
+  test('an unknown response type is ignored, not reported as an error', () {
+    // A newer server sending a frame this build has never heard of must not
+    // turn every message into an error toast for the user.
     final response = WsResponse.fromUint8List(bytes({
       'type': 'somethingNew',
       'payload': null,
     }));
-    expect(response.type, WsResponseType.error);
+    expect(response.type, WsResponseType.unknown);
+    expect(response.payload, isNull);
+  });
+
+  // A delete for everyone leaves a tombstone: the slot stays, the ciphertext is
+  // gone. The parser used to throw on it, which made the whole frame an error.
+  test('a tombstone message parses with empty ciphertext', () {
+    final response = WsResponse.fromUint8List(bytes({
+      'type': 'messages',
+      'payload': [
+        {
+          ...messageJson(seq: 9),
+          'content': null,
+          'key': null,
+          'nonce': null,
+          'mac': null,
+          'deletedAt': '2026-11-15T20:05:00Z',
+        }
+      ],
+    }));
+
+    expect(response.type, WsResponseType.messages);
+    final message = (response.payload as List).single;
+    expect(message.content, isNull);
+    expect(message.deletedAt, isNotNull);
+  });
+
+  test('a live edit frame carries its ciphertext and version', () {
+    final response = WsResponse.fromUint8List(bytes({
+      'type': 'edit',
+      'payload': {
+        'v': 1,
+        'eventSeq': 3,
+        'messageId': 'message-id',
+        'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+        'sentAt': '2026-11-15T20:00:00Z',
+        'kind': 'edit',
+        'actorId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d11',
+        'content': utf8.encode('"new"'),
+        'key': utf8.encode('k'),
+        'nonce': utf8.encode('n'),
+        'mac': utf8.encode('m'),
+        'pinned': null,
+        'createdAt': '2026-11-15T20:06:00Z',
+      },
+    }));
+
+    expect(response.type, WsResponseType.edit);
+    final event = response.payload;
+    expect(event.v, 1);
+    expect(event.eventSeq, 3);
+    expect(event.kind, MessageEventKind.edit);
+    expect(utf8.decode(event.content), '"new"');
+    expect(event.pinned, isNull);
+  });
+
+  test('an unpin frame decodes the flag', () {
+    final response = WsResponse.fromUint8List(bytes({
+      'type': 'pin',
+      'payload': {
+        'v': 1,
+        'eventSeq': 5,
+        'messageId': 'message-id',
+        'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+        'sentAt': '2026-11-15T20:00:00Z',
+        'kind': 'pin',
+        'actorId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d11',
+        'content': null,
+        'key': null,
+        'nonce': null,
+        'mac': null,
+        'pinned': false,
+        'createdAt': '2026-11-15T20:06:00Z',
+      },
+    }));
+
+    expect(response.type, WsResponseType.pin);
+    expect(response.payload.pinned, isFalse);
+  });
+
+  // The whole point of the second cursor: what happened while the device was
+  // offline must be replayable, not only what arrived live.
+  test('a synced frame carries events and cleared chats', () {
+    final response = WsResponse.fromUint8List(bytes({
+      'type': 'synced',
+      'payload': {
+        'messages': [],
+        'peers': [],
+        'events': [
+          {
+            'v': 1,
+            'eventSeq': 8,
+            'messageId': 'message-id',
+            'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+            'sentAt': '2026-11-15T20:00:00Z',
+            'kind': 'reaction',
+            'actorId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+            'content': null,
+            'key': null,
+            'nonce': null,
+            'mac': null,
+            'createdAt': '2026-11-15T20:06:00Z',
+          }
+        ],
+        'cleared': [
+          {
+            'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+            'clearedAt': '2026-11-15T20:07:00Z',
+          }
+        ],
+        'syncedThrough': 7,
+        'eventsThrough': 8,
+        'hasMore': false,
+      },
+    }));
+
+    expect(response.type, WsResponseType.synced);
+    final synced = response.payload as Synced;
+    expect(synced.events.single.kind, MessageEventKind.reaction);
+    expect(synced.events.single.content, isNull);
+    expect(synced.eventsThrough, 8);
+    expect(
+        synced.cleared.single.peerId, '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12');
   });
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'delivery_ack.dart';
+import 'message_event.dart';
 import 'private_message.dart';
 import 'synced.dart';
 import 'ws_response_type.dart';
@@ -15,7 +16,9 @@ class WsResponse {
 
   /// Constructor from Uint8List. Never throws: anything the server sends that
   /// this version does not understand becomes an error response, because a
-  /// throwing parser would kill the message subscription.
+  /// throwing parser would kill the message subscription. A frame type this
+  /// build has never heard of is [WsResponseType.unknown] instead, so a newer
+  /// server stays compatible with an older client.
   factory WsResponse.fromUint8List(Uint8List data) {
     dynamic decoded;
     try {
@@ -34,16 +37,7 @@ class WsResponse {
     }
     final json = decoded;
 
-    WsResponseType type;
-    try {
-      type = WsResponseType.values.byName(json['type'] as String);
-    } catch (_) {
-      // Return error on unknown type
-      return WsResponse._internal(
-        WsResponseType.error,
-        'unknown response type: ${json['type']} received from server',
-      );
-    }
+    final type = wsResponseTypeFromName(json['type'] as String?);
 
     try {
       dynamic payload;
@@ -75,8 +69,20 @@ class WsResponse {
           }
           payload = Synced.fromJson(rawSynced);
           break;
+        // One live mutation of an archived message
+        case WsResponseType.edit:
+        case WsResponseType.delete:
+        case WsResponseType.reaction:
+        case WsResponseType.pin:
+          final rawEvent = json['payload'];
+          if (rawEvent is! Map<String, dynamic>) {
+            throw const FormatException('event payload is not an object');
+          }
+          payload = MessageEvent.fromJson(rawEvent);
+          break;
         // Delete account
         case WsResponseType.deleteAccount:
+        case WsResponseType.unknown:
           payload = null;
           break;
         // Error
