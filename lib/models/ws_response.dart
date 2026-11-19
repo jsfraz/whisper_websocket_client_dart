@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'delivery_ack.dart';
 import 'message_event.dart';
 import 'private_message.dart';
+import 'read_receipt.dart';
 import 'synced.dart';
 import 'ws_response_type.dart';
 
@@ -79,6 +80,14 @@ class WsResponse {
             throw const FormatException('event payload is not an object');
           }
           payload = MessageEvent.fromJson(rawEvent);
+          break;
+        // The other participant moved their read cursor
+        case WsResponseType.read:
+          final rawReceipt = json['payload'];
+          if (rawReceipt is! Map<String, dynamic>) {
+            throw const FormatException('read payload is not an object');
+          }
+          payload = ReadReceipt.fromJson(rawReceipt);
           break;
         // Delete account
         case WsResponseType.deleteAccount:

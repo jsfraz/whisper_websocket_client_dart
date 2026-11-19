@@ -1,6 +1,7 @@
 import 'message_event.dart';
 import 'peer.dart';
 import 'private_message.dart';
+import 'read_receipt.dart';
 
 /// Answer to a sync request: the archive delta above the client's cursor, plus
 /// the mutation log and this account's whole-chat cuts.
@@ -13,6 +14,9 @@ class Synced {
 
   /// Whole-chat cuts of this account. A device applies the later instant.
   final List<ConversationCleared> cleared;
+
+  /// Read cursors the other participants set in this account's chats.
+  final List<ReadReceipt> reads;
 
   /// The message cursor to send next. It never moves backwards.
   final int syncedThrough;
@@ -28,6 +32,7 @@ class Synced {
     required this.peers,
     required this.events,
     required this.cleared,
+    required this.reads,
     required this.syncedThrough,
     required this.eventsThrough,
     required this.hasMore,
@@ -41,6 +46,7 @@ class Synced {
     }
     final rawEvents = json['events'];
     final rawCleared = json['cleared'];
+    final rawReads = json['reads'];
     return Synced(
       messages: rawMessages
           .whereType<Map<String, dynamic>>()
@@ -60,6 +66,12 @@ class Synced {
           ? rawCleared
               .whereType<Map<String, dynamic>>()
               .map(ConversationCleared.fromJson)
+              .toList()
+          : const [],
+      reads: rawReads is List
+          ? rawReads
+              .whereType<Map<String, dynamic>>()
+              .map(ReadReceipt.fromJson)
               .toList()
           : const [],
       syncedThrough: json['syncedThrough'] as int,

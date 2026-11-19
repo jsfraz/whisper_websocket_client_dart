@@ -1,3 +1,3 @@
 /// Version of this client library, reported to the app for compatibility
 /// checks against the server's `minClientVersion`.
-const String clientVersion = '0.2.0';
+const String clientVersion = '0.3.0';

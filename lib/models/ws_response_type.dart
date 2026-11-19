@@ -22,6 +22,9 @@ enum WsResponseType {
   /// Mutation log entry: a message was pinned or unpinned.
   pin,
 
+  /// The other participant moved their read cursor in this conversation.
+  read,
+
   /// A frame this client version does not know. Ignored on purpose, so a newer
   /// server cannot turn every message it sends into an error.
   unknown,

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:whisper_websocket_client_dart/models/delivery_ack.dart';
 import 'package:whisper_websocket_client_dart/models/message_event.dart';
+import 'package:whisper_websocket_client_dart/models/read_receipt.dart';
 import 'package:whisper_websocket_client_dart/models/synced.dart';
 import 'package:whisper_websocket_client_dart/models/ws_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_response.dart';
@@ -251,6 +252,13 @@ void main() {
           {
             'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
             'clearedAt': '2026-11-15T20:07:00Z',
+          }
+        ],
+        'reads': [
+          {
+            'v': 1,
+            'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+            'readAt': '2026-11-15T20:05:30Z',
           }
         ],
         'syncedThrough': 7,
