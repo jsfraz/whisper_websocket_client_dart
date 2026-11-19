@@ -72,12 +72,13 @@ class WsClient {
     channel?.sink.close();
   }
 
-  /// Ask for every archived message above [sinceSeq].
+  /// Ask for every archived message above [sinceSeq], and every mutation of a
+  /// message the device already holds above [sinceEventSeq].
   ///
   /// This is what a reconnect does instead of receiving a full queue dump: the
   /// server answers with [WsResponseType.synced] carrying only the delta.
-  void sendSync(int sinceSeq) {
-    sendMessage(WsMessage.sync(sinceSeq));
+  void sendSync(int sinceSeq, {int? sinceEventSeq}) {
+    sendMessage(WsMessage.sync(sinceSeq, sinceEventSeq: sinceEventSeq));
   }
 
   /// Send a message to the WebSocket server.
