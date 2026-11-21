@@ -3,8 +3,12 @@ import 'dart:typed_data';
 
 import 'package:test/test.dart';
 import 'package:whisper_websocket_client_dart/models/delivery_ack.dart';
+import 'package:whisper_websocket_client_dart/models/live_location.dart';
 import 'package:whisper_websocket_client_dart/models/message_event.dart';
+import 'package:whisper_websocket_client_dart/models/new_private_message.dart';
+import 'package:whisper_websocket_client_dart/models/presence.dart';
 import 'package:whisper_websocket_client_dart/models/synced.dart';
+import 'package:whisper_websocket_client_dart/models/typing.dart';
 import 'package:whisper_websocket_client_dart/models/ws_message.dart';
 import 'package:whisper_websocket_client_dart/models/ws_response.dart';
 import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
@@ -273,5 +277,85 @@ void main() {
     expect(synced.eventsThrough, 8);
     expect(
         synced.cleared.single.peerId, '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12');
+  });
+
+  test('the ephemeral frames carry only their version and peer state', () {
+    final typing = WsResponse.fromUint8List(bytes({
+      'type': 'typing',
+      'payload': {'v': 1, 'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12'},
+    }));
+    expect(typing.type, WsResponseType.typing);
+    final typed = typing.payload as TypingFrame;
+    expect(typed.v, 1);
+    expect(typed.peerId, '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12');
+
+    final presence = WsResponse.fromUint8List(bytes({
+      'type': 'presence',
+      'payload': {
+        'v': 1,
+        'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+        'online': false,
+        'lastSeenAt': '2026-11-15T20:05:30Z',
+      },
+    }));
+    expect(presence.type, WsResponseType.presence);
+    final seen = presence.payload as PresenceFrame;
+    expect(seen.online, isFalse);
+    expect(seen.lastSeenAt, DateTime.utc(2026, 11, 15, 20, 5, 30));
+
+    final location = WsResponse.fromUint8List(bytes({
+      'type': 'liveLocation',
+      'payload': {
+        'v': 1,
+        'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+        'payload': 'c2VjcmV0',
+      },
+    }));
+    expect(location.type, WsResponseType.liveLocation);
+    expect((location.payload as LiveLocationFrame).payload, 'c2VjcmV0');
+  });
+
+  test('an outgoing ephemeral frame names its topic and payload', () {
+    // The payload is an object with its own toJson, exactly like the sync frame;
+    // the wire shape is what jsonEncode produces.
+    Map<String, dynamic> wire(WsMessage message) =>
+        jsonDecode(jsonEncode(message)) as Map<String, dynamic>;
+
+    expect(wire(WsMessage.typing('peer')), {
+      'type': 'typing',
+      'payload': {'peerId': 'peer'},
+    });
+    expect(wire(WsMessage.presence(['a', 'b'], online: true)), {
+      'type': 'presence',
+      'payload': {
+        'peerIds': ['a', 'b'],
+        'online': true,
+      },
+    });
+    expect(wire(WsMessage.liveLocation('peer', 'c2VjcmV0')), {
+      'type': 'liveLocation',
+      'payload': {'peerId': 'peer', 'payload': 'c2VjcmV0'},
+    });
+  });
+
+  // A disappearing message asks the server for a shorter life than retention.
+  test('a message carries an optional ttl', () {
+    final message = NewPrivateMessage(
+      'peer',
+      Uint8List.fromList([1]),
+      Uint8List.fromList([2]),
+      Uint8List.fromList([3]),
+      Uint8List.fromList([4]),
+      ttlSeconds: 3600,
+    );
+    expect(message.toJson()['ttlSeconds'], 3600);
+    final plain = NewPrivateMessage(
+      'peer',
+      Uint8List.fromList([1]),
+      Uint8List.fromList([2]),
+      Uint8List.fromList([3]),
+      Uint8List.fromList([4]),
+    );
+    expect(plain.toJson().containsKey('ttlSeconds'), isFalse);
   });
 }

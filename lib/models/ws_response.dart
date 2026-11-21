@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'delivery_ack.dart';
+import 'live_location.dart';
 import 'message_event.dart';
+import 'presence.dart';
 import 'private_message.dart';
 import 'read_receipt.dart';
 import 'synced.dart';
+import 'typing.dart';
 import 'ws_response_type.dart';
 
 /// A response received from the WebSocket server
@@ -88,6 +91,31 @@ class WsResponse {
             throw const FormatException('read payload is not an object');
           }
           payload = ReadReceipt.fromJson(rawReceipt);
+          break;
+        // The other participant is typing
+        case WsResponseType.typing:
+          final rawTyping = json['payload'];
+          if (rawTyping is! Map<String, dynamic>) {
+            throw const FormatException('typing payload is not an object');
+          }
+          payload = TypingFrame.fromJson(rawTyping);
+          break;
+        // The other participant's presence
+        case WsResponseType.presence:
+          final rawPresence = json['payload'];
+          if (rawPresence is! Map<String, dynamic>) {
+            throw const FormatException('presence payload is not an object');
+          }
+          payload = PresenceFrame.fromJson(rawPresence);
+          break;
+        // One encrypted position of the other participant
+        case WsResponseType.liveLocation:
+          final rawLocation = json['payload'];
+          if (rawLocation is! Map<String, dynamic>) {
+            throw const FormatException(
+                'liveLocation payload is not an object');
+          }
+          payload = LiveLocationFrame.fromJson(rawLocation);
           break;
         // Delete account
         case WsResponseType.deleteAccount:

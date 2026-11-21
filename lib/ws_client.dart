@@ -81,6 +81,21 @@ class WsClient {
     sendMessage(WsMessage.sync(sinceSeq, sinceEventSeq: sinceEventSeq));
   }
 
+  /// Tells [peerId] that this device is typing. Relayed, never archived.
+  void sendTyping(String peerId) {
+    sendMessage(WsMessage.typing(peerId));
+  }
+
+  /// Announces this device's presence to [peerIds]. Relayed, never stored.
+  void sendPresence(List<String> peerIds, {required bool online}) {
+    sendMessage(WsMessage.presence(peerIds, online: online));
+  }
+
+  /// Relays one encrypted position to [peerId].
+  void sendLiveLocation(String peerId, String payload) {
+    sendMessage(WsMessage.liveLocation(peerId, payload));
+  }
+
   /// Send a message to the WebSocket server.
   ///
   /// Delivery is confirmed by the server (see [WsResponseType.ack]); writing to

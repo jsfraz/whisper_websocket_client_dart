@@ -1,4 +1,7 @@
+import 'live_location.dart';
 import 'new_private_message.dart';
+import 'presence.dart';
+import 'typing.dart';
 import 'ws_message_type.dart';
 import 'ws_sync.dart';
 
@@ -21,6 +24,27 @@ class WsMessage {
     return WsMessage._internal(
       WsMessageType.sync,
       WsSync(sinceSeq, sinceEventSeq: sinceEventSeq),
+    );
+  }
+
+  /// One "I am typing" hint for [peerId]. Relayed to the peer, never archived.
+  factory WsMessage.typing(String peerId) {
+    return WsMessage._internal(WsMessageType.typing, TypingRequest(peerId));
+  }
+
+  /// The caller's own presence for the named peers. Relayed, never stored.
+  factory WsMessage.presence(List<String> peerIds, {required bool online}) {
+    return WsMessage._internal(
+      WsMessageType.presence,
+      PresenceRequest(peerIds, online: online),
+    );
+  }
+
+  /// One encrypted position for [peerId]. Relayed, never stored.
+  factory WsMessage.liveLocation(String peerId, String payload) {
+    return WsMessage._internal(
+      WsMessageType.liveLocation,
+      LiveLocationRequest(peerId, payload),
     );
   }
 

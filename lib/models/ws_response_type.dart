@@ -25,6 +25,15 @@ enum WsResponseType {
   /// The other participant moved their read cursor in this conversation.
   read,
 
+  /// The other participant is typing right now.
+  typing,
+
+  /// The other participant is online, or just went away.
+  presence,
+
+  /// One encrypted position of the other participant.
+  liveLocation,
+
   /// A frame this client version does not know. Ignored on purpose, so a newer
   /// server cannot turn every message it sends into an error.
   unknown,

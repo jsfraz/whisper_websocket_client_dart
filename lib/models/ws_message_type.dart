@@ -4,5 +4,14 @@ enum WsMessageType {
 
   /// Asks for the archive delta above the client's cursor. Replaces the old
   /// full offline-queue drain.
-  sync
+  sync,
+
+  /// A typing hint for one peer. Relayed, never archived.
+  typing,
+
+  /// The caller's own presence. Relayed, never stored.
+  presence,
+
+  /// One encrypted position for one peer. Relayed, never stored.
+  liveLocation
 }
