@@ -1,6 +1,6 @@
 name: whisper_websocket_client_dart
 description: WebSocket client for Whisper messaging server.
-version: 0.6.0
+version: 0.7.0
 repository: https://github.com/jsfraz/whisper_websocket_client_dart
 
 environment:

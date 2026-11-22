@@ -42,6 +42,9 @@ class MediaReference {
   /// when saving).
   final String? fileName;
 
+  /// A round video note: the recipient draws it as a circle, not a thumbnail.
+  final bool videoNote;
+
   /// Loudness samples of a voice message, 0-100, oldest first.
   ///
   /// Recorded alongside the audio, because the recipient cannot derive them
@@ -58,6 +61,7 @@ class MediaReference {
     this.durationMs,
     this.fileName,
     this.waveform,
+    this.videoNote = false,
   });
 
   /// Parses a reference from decrypted message content. The data comes from the
@@ -72,6 +76,7 @@ class MediaReference {
         height = (json['height'] as num?)?.toInt(),
         durationMs = (json['durationMs'] as num?)?.toInt(),
         fileName = json['fileName'] as String?,
+        videoNote = json['videoNote'] == true,
         waveform = json['waveform'] == null
             ? null
             : List<int>.from(
@@ -98,6 +103,9 @@ class MediaReference {
     }
     if (waveform != null && waveform!.isNotEmpty) {
       json['waveform'] = waveform;
+    }
+    if (videoNote) {
+      json['videoNote'] = true;
     }
     return json;
   }
