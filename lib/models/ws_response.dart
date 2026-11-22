@@ -78,6 +78,7 @@ class WsResponse {
         case WsResponseType.delete:
         case WsResponseType.reaction:
         case WsResponseType.pin:
+        case WsResponseType.open:
           final rawEvent = json['payload'];
           if (rawEvent is! Map<String, dynamic>) {
             throw const FormatException('event payload is not an object');

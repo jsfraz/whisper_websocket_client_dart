@@ -227,6 +227,31 @@ void main() {
     expect(response.payload.pinned, isFalse);
   });
 
+  test('an open frame carries the instant the receiver opened it', () {
+    final response = WsResponse.fromUint8List(bytes({
+      'type': 'open',
+      'payload': {
+        'v': 1,
+        'eventSeq': 9,
+        'messageId': 'message-id',
+        'peerId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+        'sentAt': '2026-11-15T20:00:00Z',
+        'kind': 'open',
+        'actorId': '2f8c1c1e-6c55-4d8f-9d3f-6f6b8a0c2d12',
+        'content': null,
+        'key': null,
+        'nonce': null,
+        'mac': null,
+        'openedAt': '2026-11-15T20:07:00Z',
+        'createdAt': '2026-11-15T20:07:00Z',
+      },
+    }));
+
+    expect(response.type, WsResponseType.open);
+    expect(response.payload.kind, MessageEventKind.open);
+    expect(response.payload.openedAt, DateTime.utc(2026, 11, 15, 20, 7));
+  });
+
   // The whole point of the second cursor: what happened while the device was
   // offline must be replayable, not only what arrived live.
   test('a synced frame carries events and cleared chats', () {

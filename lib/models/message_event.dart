@@ -24,6 +24,9 @@ class MessageEvent {
 
   /// Set on a pin event only: true pins, false unpins.
   final bool? pinned;
+
+  /// Set on an open event only: the instant the receiver opened the attachment.
+  final DateTime? openedAt;
   final DateTime createdAt;
 
   MessageEvent({
@@ -39,6 +42,7 @@ class MessageEvent {
     required this.nonce,
     required this.mac,
     required this.pinned,
+    this.openedAt,
     required this.createdAt,
   });
 
@@ -56,13 +60,16 @@ class MessageEvent {
       nonce: _bytes(json['nonce']),
       mac: _bytes(json['mac']),
       pinned: json['pinned'] as bool?,
+      openedAt: json['openedAt'] == null
+          ? null
+          : DateTime.parse(json['openedAt'] as String),
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
 }
 
 /// Kind of a mutation log entry.
-enum MessageEventKind { edit, delete, reaction, pin }
+enum MessageEventKind { edit, delete, reaction, pin, open }
 
 Uint8List? _bytes(dynamic value) {
   if (value == null) {

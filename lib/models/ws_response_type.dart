@@ -22,6 +22,9 @@ enum WsResponseType {
   /// Mutation log entry: a message was pinned or unpinned.
   pin,
 
+  /// Mutation log entry: the receiver opened a view-once attachment.
+  open,
+
   /// The other participant moved their read cursor in this conversation.
   read,
 

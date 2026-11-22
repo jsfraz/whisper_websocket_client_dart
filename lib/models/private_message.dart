@@ -34,6 +34,9 @@ class PrivateMessage {
 
   /// Set when the sender edited the message.
   final DateTime? editedAt;
+
+  /// Set when the receiver opened a view-once attachment.
+  final DateTime? openedAt;
   final bool recipientOnline;
 
   PrivateMessage({
@@ -48,6 +51,7 @@ class PrivateMessage {
     required this.sentAt,
     required this.deletedAt,
     required this.editedAt,
+    this.openedAt,
     required this.recipientOnline,
   });
 
@@ -63,6 +67,7 @@ class PrivateMessage {
         sentAt = DateTime.parse(json['sentAt']),
         deletedAt = instantFromJson(json['deletedAt']),
         editedAt = instantFromJson(json['editedAt']),
+        openedAt = instantFromJson(json['openedAt']),
         recipientOnline = json['recipientOnline'] as bool;
 }
 
