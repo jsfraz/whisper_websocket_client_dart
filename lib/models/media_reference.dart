@@ -42,6 +42,12 @@ class MediaReference {
   /// when saving).
   final String? fileName;
 
+  /// Loudness samples of a voice message, 0-100, oldest first.
+  ///
+  /// Recorded alongside the audio, because the recipient cannot derive them
+  /// without decoding the file: the waveform is drawn from these.
+  final List<int>? waveform;
+
   MediaReference(
     this.mediaId,
     this.key,
@@ -51,6 +57,7 @@ class MediaReference {
     this.height,
     this.durationMs,
     this.fileName,
+    this.waveform,
   });
 
   /// Parses a reference from decrypted message content. The data comes from the
@@ -64,7 +71,11 @@ class MediaReference {
         width = (json['width'] as num?)?.toInt(),
         height = (json['height'] as num?)?.toInt(),
         durationMs = (json['durationMs'] as num?)?.toInt(),
-        fileName = json['fileName'] as String?;
+        fileName = json['fileName'] as String?,
+        waveform = json['waveform'] == null
+            ? null
+            : List<int>.from(
+                (json['waveform'] as List).map((v) => (v as num).toInt()));
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
@@ -84,6 +95,9 @@ class MediaReference {
     }
     if (fileName != null) {
       json['fileName'] = fileName;
+    }
+    if (waveform != null && waveform!.isNotEmpty) {
+      json['waveform'] = waveform;
     }
     return json;
   }
