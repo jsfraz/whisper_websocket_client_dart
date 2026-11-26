@@ -9,3 +9,5 @@ pubspec.lock
 
 *.pem
 .env*
+# Local dev override, never committed.
+pubspec_overrides.yaml

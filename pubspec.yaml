@@ -22,8 +22,3 @@ dev_dependencies:
       # Pinned to the released client instead of a moving branch: the app and
       # this package must agree on the contract.
       ref: v0.5.0
-
-# The live tests use the monorepo client, not the published tag.
-dependency_overrides:
-  shept_openapi_client_dart:
-    path: ../shept_openapi_client_dart
