@@ -5,7 +5,7 @@ import 'media_type.dart';
 /// A reference to an encrypted media file stored on the server.
 ///
 /// Media files are uploaded over HTTP (see `MediaApi` in the
-/// `whisper_openapi_client_dart` package) and only their *reference* travels
+/// `shept_openapi_client_dart` package) and only their *reference* travels
 /// inside a private message. This reference (the media id plus the symmetric
 /// [key] needed to decrypt the downloaded ciphertext, and the media metadata)
 /// is the plaintext that the consumer serializes with [toJson] and then
@@ -37,6 +37,20 @@ class MediaReference {
   /// Optional duration in milliseconds (videos, voice messages).
   final int? durationMs;
 
+  /// Original file name including the extension, for [MediaType.file] and any
+  /// other attachment whose name should survive (shown in the bubble and used
+  /// when saving).
+  final String? fileName;
+
+  /// A round video note: the recipient draws it as a circle, not a thumbnail.
+  final bool videoNote;
+
+  /// Loudness samples of a voice message, 0-100, oldest first.
+  ///
+  /// Recorded alongside the audio, because the recipient cannot derive them
+  /// without decoding the file: the waveform is drawn from these.
+  final List<int>? waveform;
+
   MediaReference(
     this.mediaId,
     this.key,
@@ -45,16 +59,28 @@ class MediaReference {
     this.width,
     this.height,
     this.durationMs,
+    this.fileName,
+    this.waveform,
+    this.videoNote = false,
   });
 
+  /// Parses a reference from decrypted message content. The data comes from the
+  /// other side, so numbers are read as [num]: JSON has no int/double
+  /// distinction and `1.0` would otherwise throw.
   MediaReference.fromJson(Map<String, dynamic> json)
       : mediaId = json['mediaId'] as String,
         key = Uint8List.fromList(List<int>.from(json['key'])),
         type = MediaType.values.byName(json['type'] as String),
-        size = json['size'] as int,
-        width = json['width'] as int?,
-        height = json['height'] as int?,
-        durationMs = json['durationMs'] as int?;
+        size = (json['size'] as num).toInt(),
+        width = (json['width'] as num?)?.toInt(),
+        height = (json['height'] as num?)?.toInt(),
+        durationMs = (json['durationMs'] as num?)?.toInt(),
+        fileName = json['fileName'] as String?,
+        videoNote = json['videoNote'] == true,
+        waveform = json['waveform'] == null
+            ? null
+            : List<int>.from(
+                (json['waveform'] as List).map((v) => (v as num).toInt()));
 
   Map<String, dynamic> toJson() {
     final json = <String, dynamic>{
@@ -71,6 +97,15 @@ class MediaReference {
     }
     if (durationMs != null) {
       json['durationMs'] = durationMs;
+    }
+    if (fileName != null) {
+      json['fileName'] = fileName;
+    }
+    if (waveform != null && waveform!.isNotEmpty) {
+      json['waveform'] = waveform;
+    }
+    if (videoNote) {
+      json['videoNote'] = true;
     }
     return json;
   }

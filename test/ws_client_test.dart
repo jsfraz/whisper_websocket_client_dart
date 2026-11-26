@@ -1,60 +1,93 @@
 import 'dart:convert';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:basic_utils/basic_utils.dart';
+import 'package:pointycastle/export.dart';
 import 'package:test/test.dart';
-import 'package:whisper_openapi_client_dart/api.dart';
+import 'package:shept_openapi_client_dart/api.dart';
 import 'dart:io';
 import 'package:dotenv/dotenv.dart';
-import 'package:whisper_websocket_client_dart/models/new_private_message.dart';
-import 'package:whisper_websocket_client_dart/models/private_message.dart';
-import 'package:whisper_websocket_client_dart/models/ws_message.dart';
-import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
-import 'package:whisper_websocket_client_dart/ws_client.dart';
+import 'package:shept_websocket_client_dart/models/new_private_message.dart';
+import 'package:shept_websocket_client_dart/models/private_message.dart';
+import 'package:shept_websocket_client_dart/models/ws_message.dart';
+import 'package:shept_websocket_client_dart/models/ws_response_type.dart';
+import 'package:shept_websocket_client_dart/version.dart';
+import 'package:shept_websocket_client_dart/ws_client.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart' as djwt;
 
 void main() {
   late String serverUrl;
   late String inviteCode;
+  late String username;
+  late String adminSearch;
   late String publicKeyPem;
   late String privateKeyPem;
-  late int userId;
+  late String userId;
+  late RSAPublicKey publicKey;
+  late RSAPrivateKey privateKey;
 
   // Setup variables
   setUpAll(() {
     var env = DotEnv(includePlatformEnvironment: true)..load(['.env.dev']);
     serverUrl = env['SERVER_URL'] ?? '';
     inviteCode = env['INVITE_CODE'] ?? '';
+    // A used invite cannot register again, so a re-run needs a new name.
+    username = env['USERNAME'] ?? 'wsUnitTest';
+    adminSearch = env['ADMIN_SEARCH'] ?? 'admin';
     publicKeyPem = File('publicKey.pem').readAsStringSync();
     privateKeyPem = File('privateKey.pem').readAsStringSync();
-    userId = int.parse(env['USER_ID'] ?? '0');
+    userId = env['USER_ID'] ?? '';
+    publicKey = CryptoUtils.rsaPublicKeyFromPem(publicKeyPem);
+    privateKey = CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem);
   });
 
   // Create user on server
   test('register', () async {
     var apiClient = ApiClient(basePath: serverUrl);
     var authApi = AuthenticationApi(apiClient);
-    // Create user
-    var response = await authApi.createUser(
-        createUserInput: CreateUserInput(
-            inviteCode: inviteCode,
-            publicKey: publicKeyPem,
-            username: 'wsUnitTest'));
-    // Check response
-    if (response == null) {
-      throw Exception('Failed to create user');
-    } else {
+    try {
+      // Create user
+      var response = await authApi.createUser(
+          createUserInput: CreateUserInput(
+              inviteCode: inviteCode,
+              publicKey: publicKeyPem,
+              username: username));
+      // Check response
+      if (response == null) {
+        throw Exception('Failed to create user');
+      }
       print('Write your user ID to .env.dev file: ${response.id}');
+    } on ApiException catch (e) {
+      // The invite is single use: an already registered account is fine
+      if (userId.isEmpty) {
+        rethrow;
+      }
+      print('Account already registered as USER_ID=$userId (${e.message})');
     }
   });
 
-  // Get one time access token for WebSocket client
-  Future<String> getOneTimeAccessToken() async {
+  // The live server refuses a client below its minimum, and a login names the
+  // device it comes from. One constant is enough for a dev account.
+  const deviceId = '00000000-0000-4000-8000-000000000001';
+
+  // Get an authenticated API client (RSA JWT -> access token)
+  Future<ApiClient> getAuthenticatedApiClient() async {
     var apiClient = ApiClient(basePath: serverUrl);
+    apiClient.addDefaultHeader('X-Client-Version', clientVersion);
     var authApi = AuthenticationApi(apiClient);
+    // The login token is single use: the server spends this challenge on the
+    // authUser call below.
+    var challenge = await authApi.authChallenge();
     // Generate JWT
-    final jwt = djwt.JWT({'sub': userId});
+    final jwt = djwt.JWT({
+      'sub': userId,
+      'did': deviceId,
+      'nonce': challenge?.challenge,
+    });
     Duration expiresIn = Duration(seconds: 5);
-    Duration notBefore = Duration.zero;
+    // dart_jsonwebtoken writes nbf = now + notBefore, so a negative value
+    // backdates the token and a server clock a few seconds behind is fine.
+    Duration notBefore = const Duration(seconds: -30);
     final token = jwt.sign(
         djwt.RSAPrivateKey.raw(CryptoUtils.rsaPrivateKeyFromPem(privateKeyPem)),
         algorithm: djwt.JWTAlgorithm.RS256,
@@ -62,15 +95,25 @@ void main() {
         notBefore: notBefore,
         noIssueAt: false);
     // Auth user
-    var authResponse =
-        await authApi.authUser(authUserInput: AuthUserInput(token: token));
+    var authResponse = await authApi.authUser(
+        authUserInput: AuthUserInput(
+      token: token,
+      deviceId: deviceId,
+      label: 'live test',
+      platform: 'linux',
+    ));
     if (authResponse == null) {
       throw Exception('Failed to authenticate user');
     }
     // Set access token
     var auth = HttpBearerAuth();
     auth.accessToken = authResponse.accessToken;
-    apiClient = ApiClient(basePath: serverUrl, authentication: auth);
+    return ApiClient(basePath: serverUrl, authentication: auth);
+  }
+
+  // Get one time access token for WebSocket client
+  Future<String> getOneTimeAccessToken() async {
+    var apiClient = await getAuthenticatedApiClient();
     // Get one time access token
     var wsAuthApi = WebSocketAuthenticationApi(apiClient);
     var wsAuthResponse = await wsAuthApi.webSocketAuth();
@@ -103,11 +146,15 @@ void main() {
       // Print received message
       switch (wsResponse.type) {
         case WsResponseType.messages:
-          // TODO Decrypt message using my private key
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
-            print(
-                'UserID: ${message.senderId} Message length: ${message.content.length}');
+            try {
+              var content = decryptMessage(message.content!, message.key!,
+                  message.nonce!, message.mac!, privateKey);
+              print('UserID: ${message.senderId} Message: $content');
+            } catch (e) {
+              print('Failed to decrypt message from ${message.senderId}: $e');
+            }
           }
           break;
         case WsResponseType.error:
@@ -131,16 +178,23 @@ void main() {
   test('connectAndSendMessageToSelf', () async {
     // Get access token
     var accessToken = await getOneTimeAccessToken();
+    // Decrypted messages received from the server
+    var decryptedMessages = <String>[];
     // Connect to the server
     var wsClient = WsClient(getWsUrl(serverUrl), onReceived: (wsResponse) {
       // Print received message
       switch (wsResponse.type) {
         case WsResponseType.messages:
-          // TODO Decrypt message using my private key
           var messages = wsResponse.payload as List<PrivateMessage>;
           for (var message in messages) {
-            print(
-                'UserID: ${message.senderId} Message length: ${message.content.length}');
+            try {
+              var content = decryptMessage(message.content!, message.key!,
+                  message.nonce!, message.mac!, privateKey);
+              decryptedMessages.add(content);
+              print('UserID: ${message.senderId} Message: $content');
+            } catch (e) {
+              print('Failed to decrypt message from ${message.senderId}: $e');
+            }
           }
           break;
         case WsResponseType.error:
@@ -154,23 +208,75 @@ void main() {
     });
     await wsClient.connect(accessToken, Duration(seconds: 5));
     // Send message
-    // TODO Encrypt the message using the public key of the user
     var messageToSendStr = 'Hello, World!';
-    var key = Uint8List(32);
-    var nonce = Uint8List(12);
-    var mac = Uint8List(32);
+    // Self chat, so the recipient key is our own public key
+    var encrypted = encryptMessage(messageToSendStr, publicKey);
     print('Sending message: $messageToSendStr');
-    var messageToSend = WsMessage.privateMessage(
-        NewPrivateMessage(userId, utf8.encode(messageToSendStr), key, nonce, mac));
+    var messageToSend = WsMessage.privateMessage(NewPrivateMessage(
+        userId,
+        encrypted['encryptedData']!,
+        encrypted['encryptedKey']!,
+        encrypted['nonce']!,
+        encrypted['mac']!));
     for (var i = 0; i < 5; i++) {
-      var sentTime = wsClient.sendMessage(messageToSend);
-      print('Message sent at: $sentTime');
+      wsClient.sendMessage(messageToSend);
       await Future.delayed(Duration(milliseconds: 500));
     }
     // Wait for 5 seconds
     await Future.delayed(Duration(seconds: 5));
     // Close WebSocket connection
     wsClient.disconnect();
+    // The messages must come back and decrypt to what was sent
+    expect(decryptedMessages, isNotEmpty);
+    expect(decryptedMessages, everyElement(messageToSendStr));
+  });
+
+  // Send an encrypted message to the admin account
+  test('sendMessageToAdmin', () async {
+    var apiClient = await getAuthenticatedApiClient();
+    // Find admin among the searched users
+    var users = await UserApi(apiClient).searchUsers(adminSearch);
+    var admins = users?.where((u) => u.admin).toList() ?? [];
+    if (admins.isEmpty) {
+      final found = users?.map((u) => '${u.username} (admin: ${u.admin})');
+      throw Exception(
+          'Admin user not found for ADMIN_SEARCH=$adminSearch, found: $found');
+    }
+    var admin = admins.first;
+    // Encrypt with the admin public key
+    var messageToSendStr =
+        'Hello admin, this is a test message from the WebSocket client.';
+    var encrypted = encryptMessage(
+        messageToSendStr, CryptoUtils.rsaPublicKeyFromPem(admin.publicKey));
+    var wsAuthResponse =
+        await WebSocketAuthenticationApi(apiClient).webSocketAuth();
+    if (wsAuthResponse == null) {
+      throw Exception('Failed to get one time access token');
+    }
+    // Connect to the server
+    var wsClient = WsClient(getWsUrl(serverUrl));
+    await wsClient.connect(wsAuthResponse.accessToken, Duration(seconds: 5));
+    print('Sending message to admin (id ${admin.id}): $messageToSendStr');
+    wsClient.sendMessage(WsMessage.privateMessage(NewPrivateMessage(
+        admin.id,
+        encrypted['encryptedData']!,
+        encrypted['encryptedKey']!,
+        encrypted['nonce']!,
+        encrypted['mac']!)));
+    await Future.delayed(Duration(seconds: 2));
+    wsClient.disconnect();
+  });
+
+  // Encrypt/decrypt round trip without a server
+  test('encryptAndDecryptRoundTrip', () {
+    var encrypted = encryptMessage('Hello, World!', publicKey);
+    var decrypted = decryptMessage(
+        encrypted['encryptedData']!,
+        encrypted['encryptedKey']!,
+        encrypted['nonce']!,
+        encrypted['mac']!,
+        privateKey);
+    expect(decrypted, 'Hello, World!');
   });
 
   // Test isConnected getter
@@ -183,8 +289,56 @@ void main() {
   test('sendMessageWhenNotConnected', () {
     var wsClient = WsClient(getWsUrl(serverUrl));
     expect(
-        () => wsClient.sendMessage(WsMessage.privateMessage(
-            NewPrivateMessage(userId, utf8.encode('Hello, World!'), Uint8List(32), Uint8List(12), Uint8List(32)))),
+        () => wsClient.sendMessage(WsMessage.privateMessage(NewPrivateMessage(
+            userId,
+            utf8.encode('Hello, World!'),
+            Uint8List(32),
+            Uint8List(12),
+            Uint8List(32)))),
         throwsA(TypeMatcher<Exception>()));
   });
+}
+
+/// Encrypts [plaintext] for the holder of [publicKey].
+///
+/// Same layout as the app: a random AES-256-GCM key encrypts the content, and
+/// the RSA-encrypted AES key travels next to it.
+Map<String, Uint8List> encryptMessage(
+    String plaintext, RSAPublicKey publicKey) {
+  final random = Random.secure();
+  final aesKey =
+      Uint8List.fromList(List.generate(32, (_) => random.nextInt(256)));
+  final nonce =
+      Uint8List.fromList(List.generate(12, (_) => random.nextInt(256)));
+
+  final aesCipher = GCMBlockCipher(AESEngine())
+    ..init(
+        true, AEADParameters(KeyParameter(aesKey), 128, nonce, Uint8List(0)));
+  // GCM appends the 16-byte tag to the ciphertext; the protocol carries them apart
+  final sealed = aesCipher.process(Uint8List.fromList(utf8.encode(plaintext)));
+  final cipherTextLength = sealed.length - 16;
+
+  final rsaCipher = PKCS1Encoding(RSAEngine())
+    ..init(true, PublicKeyParameter<RSAPublicKey>(publicKey));
+
+  return {
+    'encryptedData': sealed.sublist(0, cipherTextLength),
+    'encryptedKey': rsaCipher.process(aesKey),
+    'nonce': nonce,
+    'mac': sealed.sublist(cipherTextLength),
+  };
+}
+
+/// Decrypts a received message with the recipient's [privateKey].
+String decryptMessage(Uint8List content, Uint8List key, Uint8List nonce,
+    Uint8List mac, RSAPrivateKey privateKey) {
+  final rsaCipher = PKCS1Encoding(RSAEngine())
+    ..init(false, PrivateKeyParameter<RSAPrivateKey>(privateKey));
+  final aesKey = rsaCipher.process(key);
+
+  final aesCipher = GCMBlockCipher(AESEngine())
+    ..init(
+        false, AEADParameters(KeyParameter(aesKey), 128, nonce, Uint8List(0)));
+  final plain = aesCipher.process(Uint8List.fromList([...content, ...mac]));
+  return utf8.decode(plain);
 }

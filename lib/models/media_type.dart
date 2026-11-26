@@ -7,4 +7,11 @@ enum MediaType {
   gif,
   video,
   voice,
+
+  /// Arbitrary file (documents, archives, ...). The name, including the
+  /// extension, travels in [MediaReference.fileName].
+  file,
+
+  /// A saved sticker: an image or an animated GIF drawn without a bubble.
+  sticker,
 }
