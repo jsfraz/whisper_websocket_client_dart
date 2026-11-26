@@ -2,17 +2,17 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
-import 'package:whisper_websocket_client_dart/models/delivery_ack.dart';
-import 'package:whisper_websocket_client_dart/models/live_location.dart';
-import 'package:whisper_websocket_client_dart/models/message_event.dart';
-import 'package:whisper_websocket_client_dart/models/new_private_message.dart';
-import 'package:whisper_websocket_client_dart/models/presence.dart';
-import 'package:whisper_websocket_client_dart/models/synced.dart';
-import 'package:whisper_websocket_client_dart/models/typing.dart';
-import 'package:whisper_websocket_client_dart/models/ws_message.dart';
-import 'package:whisper_websocket_client_dart/models/ws_response.dart';
-import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
-import 'package:whisper_websocket_client_dart/ws_client.dart';
+import 'package:shept_websocket_client_dart/models/delivery_ack.dart';
+import 'package:shept_websocket_client_dart/models/live_location.dart';
+import 'package:shept_websocket_client_dart/models/message_event.dart';
+import 'package:shept_websocket_client_dart/models/new_private_message.dart';
+import 'package:shept_websocket_client_dart/models/presence.dart';
+import 'package:shept_websocket_client_dart/models/synced.dart';
+import 'package:shept_websocket_client_dart/models/typing.dart';
+import 'package:shept_websocket_client_dart/models/ws_message.dart';
+import 'package:shept_websocket_client_dart/models/ws_response.dart';
+import 'package:shept_websocket_client_dart/models/ws_response_type.dart';
+import 'package:shept_websocket_client_dart/ws_client.dart';
 
 Uint8List bytes(Object json) =>
     Uint8List.fromList(utf8.encode(jsonEncode(json)));

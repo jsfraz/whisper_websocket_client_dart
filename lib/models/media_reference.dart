@@ -5,7 +5,7 @@ import 'media_type.dart';
 /// A reference to an encrypted media file stored on the server.
 ///
 /// Media files are uploaded over HTTP (see `MediaApi` in the
-/// `whisper_openapi_client_dart` package) and only their *reference* travels
+/// `shept_openapi_client_dart` package) and only their *reference* travels
 /// inside a private message. This reference (the media id plus the symmetric
 /// [key] needed to decrypt the downloaded ciphertext, and the media metadata)
 /// is the plaintext that the consumer serializes with [toJson] and then

@@ -4,15 +4,15 @@ import 'dart:typed_data';
 import 'package:basic_utils/basic_utils.dart';
 import 'package:pointycastle/export.dart';
 import 'package:test/test.dart';
-import 'package:whisper_openapi_client_dart/api.dart';
+import 'package:shept_openapi_client_dart/api.dart';
 import 'dart:io';
 import 'package:dotenv/dotenv.dart';
-import 'package:whisper_websocket_client_dart/models/new_private_message.dart';
-import 'package:whisper_websocket_client_dart/models/private_message.dart';
-import 'package:whisper_websocket_client_dart/models/ws_message.dart';
-import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
-import 'package:whisper_websocket_client_dart/version.dart';
-import 'package:whisper_websocket_client_dart/ws_client.dart';
+import 'package:shept_websocket_client_dart/models/new_private_message.dart';
+import 'package:shept_websocket_client_dart/models/private_message.dart';
+import 'package:shept_websocket_client_dart/models/ws_message.dart';
+import 'package:shept_websocket_client_dart/models/ws_response_type.dart';
+import 'package:shept_websocket_client_dart/version.dart';
+import 'package:shept_websocket_client_dart/ws_client.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart' as djwt;
 
 void main() {

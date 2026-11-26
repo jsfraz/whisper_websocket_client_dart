@@ -1,7 +1,7 @@
-name: whisper_websocket_client_dart
-description: WebSocket client for Whisper messaging server.
-version: 0.7.0
-repository: https://github.com/jsfraz/whisper_websocket_client_dart
+name: shept_websocket_client_dart
+description: WebSocket client for Shept messaging server.
+version: 0.5.0
+repository: https://github.com/jsfraz/shept_websocket_client_dart
 
 environment:
   sdk: ^3.6.0
@@ -16,14 +16,14 @@ dev_dependencies:
   pointycastle: ^4.0.0
   basic_utils: ^5.7.0
   dart_jsonwebtoken: ^3.2.0
-  whisper_openapi_client_dart:
+  shept_openapi_client_dart:
     git:
-      url: https://github.com/jsfraz/whisper_openapi_client_dart.git
+      url: https://github.com/jsfraz/shept_openapi_client_dart.git
       # Pinned to the released client instead of a moving branch: the app and
       # this package must agree on the contract.
-      ref: v0.3.0
+      ref: v0.5.0
 
 # The live tests use the monorepo client, not the published tag.
 dependency_overrides:
-  whisper_openapi_client_dart:
-    path: ../whisper_openapi_client_dart
+  shept_openapi_client_dart:
+    path: ../shept_openapi_client_dart

@@ -1,12 +1,12 @@
-# whisper_websocket_client_dart
+# shept_websocket_client_dart
 
-A WebSocket client for Whisper messaging server.
+A WebSocket client for Shept messaging server.
 
 ## AI / MCP tooling
 
-Developed alongside `whisper-server` (see `../whisper-server/README.md`). The agent's Dart MCP
+Developed alongside `shept-server` (see `../shept-server/README.md`). The agent's Dart MCP
 server is configured globally in `~/.config/opencode/opencode.json`; setup lives in the
-`whisper` app README. Its live integration test needs a running server — do not run it from an
+`shept` app README. Its live integration test needs a running server — do not run it from an
 autonomous loop.
 
 ## Installation
@@ -14,18 +14,18 @@ autonomous loop.
 Add the following dependency to your pubspec.yaml
 
 ```yaml
-whisper_websocket_client_dart:
+shept_websocket_client_dart:
     git:
-      url: https://github.com/jsfraz/whisper_websocket_client_dart.git
+      url: https://github.com/jsfraz/shept_websocket_client_dart.git
       ref: v0.1.0
 ```
 
 ## Usage
 
 ```dart
-import 'package:whisper_websocket_client_dart/models/private_message.dart';
-import 'package:whisper_websocket_client_dart/models/ws_response_type.dart';
-import 'package:whisper_websocket_client_dart/ws_client.dart';
+import 'package:shept_websocket_client_dart/models/private_message.dart';
+import 'package:shept_websocket_client_dart/models/ws_response_type.dart';
+import 'package:shept_websocket_client_dart/ws_client.dart';
 
 var wsClient = WsClient('ws://localhost:8080/ws', onReceived: (wsResponse) {
   switch (wsResponse.type) {
@@ -75,7 +75,7 @@ TTL expires).
 Sender flow:
 
 1. Encrypt the media file locally and upload the ciphertext with
-   `MediaApi.uploadMedia(receiverId, file)` from `whisper_openapi_client_dart`,
+   `MediaApi.uploadMedia(receiverId, file)` from `shept_openapi_client_dart`,
    which returns the media `id`.
 2. Build a `MediaReference(id, key, type, size, ...)` describing the upload
    (including the symmetric `key` needed to decrypt it).
@@ -101,7 +101,7 @@ One workflow, `ci.yml`, runs on pull requests and on pushes to `main`: format ch
 
 No repository secrets are required. `GITHUB_TOKEN` is provided automatically and is only used by the secret scan.
 
-The live integration test (`test/ws_client_test.dart`) needs a running server, an invite code, a user id and the RSA key pair, so it does not run in CI. Run it locally against `whisper-server` before changing the protocol.
+The live integration test (`test/ws_client_test.dart`) needs a running server, an invite code, a user id and the RSA key pair, so it does not run in CI. Run it locally against `shept-server` before changing the protocol.
 
 ## Dependencies
 
@@ -122,8 +122,8 @@ The live integration test (`test/ws_client_test.dart`) needs a running server, a
   - used for cryptography
 - [dart_jsonwebtoken](https://pub.dev/packages/dart_jsonwebtoken)
   - used for JWT token handling
-- [whisper_openapi_client_dart](https://github.com/jsfraz/whisper_openapi_client_dart)
-  - used for API communication with Whisper server
+- [shept_openapi_client_dart](https://github.com/jsfraz/shept_openapi_client_dart)
+  - used for API communication with Shept server
 
 ## License
 
